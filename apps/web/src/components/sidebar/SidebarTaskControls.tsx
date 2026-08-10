@@ -49,58 +49,53 @@ export const SidebarTaskHeaderContent = memo(function SidebarTaskHeaderContent(p
   searchOpen: boolean;
   searchQuery: string;
   searchInputRef: RefObject<HTMLInputElement | null>;
-  searchTriggerRef?: RefObject<HTMLButtonElement | null>;
   searchResultCount: number;
   activeSearchResultIndex: number;
-  onOpenSearch: () => void;
   onCloseSearch: () => void;
   onSearchQueryChange: ChangeEventHandler<HTMLInputElement>;
   onSearchKeyDown: KeyboardEventHandler<HTMLInputElement>;
 }) {
+  if (!props.searchOpen) return props.brand;
+
   const searchResultsVisible = props.searchQuery.trim().length > 0 && props.searchResultCount > 0;
   const activeSearchResultExists =
     props.activeSearchResultIndex >= 0 && props.activeSearchResultIndex < props.searchResultCount;
 
   return (
     <>
-      {props.searchOpen ? (
-        <div className="relative z-10 ml-1 flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md bg-sidebar-control-surface px-2 md:ml-[var(--workspace-titlebar-content-left)]">
-          <SearchIcon aria-hidden className="size-4 shrink-0 text-sidebar-muted-foreground" />
-          <Input
-            ref={props.searchInputRef}
-            nativeInput
-            unstyled
-            type="search"
-            value={props.searchQuery}
-            onChange={props.onSearchQueryChange}
-            onKeyDown={props.onSearchKeyDown}
-            placeholder="Search tasks"
-            aria-label="Search tasks"
-            role="combobox"
-            aria-autocomplete="list"
-            aria-expanded={searchResultsVisible}
-            aria-controls={searchResultsVisible ? "sidebar-thread-search-results" : undefined}
-            aria-activedescendant={
-              searchResultsVisible && activeSearchResultExists
-                ? `sidebar-thread-search-result-${props.activeSearchResultIndex}`
-                : undefined
-            }
-            className="min-w-0 flex-1 [&_[data-slot=input]]:h-auto [&_[data-slot=input]]:p-0 [&_[data-slot=input]]:leading-normal [&_[data-slot=input]]:text-sm [&_[data-slot=input]]:font-medium [&_[data-slot=input]]:text-sidebar-foreground [&_[data-slot=input]]:placeholder:text-sidebar-muted-foreground"
-          />
-        </div>
-      ) : (
-        props.brand
-      )}
+      <div className="relative z-10 ml-1 flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md bg-sidebar-control-surface px-2 md:ml-[var(--workspace-titlebar-content-left)]">
+        <SearchIcon aria-hidden className="size-4 shrink-0 text-sidebar-muted-foreground" />
+        <Input
+          ref={props.searchInputRef}
+          nativeInput
+          unstyled
+          type="search"
+          value={props.searchQuery}
+          onChange={props.onSearchQueryChange}
+          onKeyDown={props.onSearchKeyDown}
+          placeholder="Search tasks"
+          aria-label="Search tasks"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={searchResultsVisible}
+          aria-controls={searchResultsVisible ? "sidebar-thread-search-results" : undefined}
+          aria-activedescendant={
+            searchResultsVisible && activeSearchResultExists
+              ? `sidebar-thread-search-result-${props.activeSearchResultIndex}`
+              : undefined
+          }
+          className="min-w-0 flex-1 [&_[data-slot=input]]:h-auto [&_[data-slot=input]]:p-0 [&_[data-slot=input]]:leading-normal [&_[data-slot=input]]:text-sm [&_[data-slot=input]]:font-medium [&_[data-slot=input]]:text-sidebar-foreground [&_[data-slot=input]]:placeholder:text-sidebar-muted-foreground"
+        />
+      </div>
       <Button
-        ref={props.searchTriggerRef}
         type="button"
         size="icon-sm"
         variant="ghost"
         className="relative z-10 ml-auto mr-0 border-transparent md:mr-3"
-        aria-label={props.searchOpen ? "Close task search" : "Search tasks"}
-        onClick={props.searchOpen ? props.onCloseSearch : props.onOpenSearch}
+        aria-label="Close task search"
+        onClick={props.onCloseSearch}
       >
-        {props.searchOpen ? <XIcon aria-hidden /> : <SearchIcon aria-hidden />}
+        <XIcon aria-hidden />
       </Button>
     </>
   );
@@ -112,8 +107,11 @@ export const SidebarTaskPrimaryControls = memo(function SidebarTaskPrimaryContro
   projectScopeActive: boolean;
   projectFilterControl: ReactNode;
   newTaskTitle?: string;
+  searchOpen: boolean;
+  searchTriggerRef: RefObject<HTMLButtonElement | null>;
   onNewTask: () => void;
   onNewProject: () => void;
+  onOpenSearch: () => void;
 }) {
   return (
     <>
@@ -135,6 +133,18 @@ export const SidebarTaskPrimaryControls = memo(function SidebarTaskPrimaryContro
             <SidebarMenuButton type="button" variant="prominent" onClick={props.onNewProject}>
               <FolderPlusIcon aria-hidden />
               <span>New project</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              ref={props.searchTriggerRef}
+              type="button"
+              variant="prominent"
+              aria-expanded={props.searchOpen}
+              onClick={props.onOpenSearch}
+            >
+              <SearchIcon aria-hidden />
+              <span>Search</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

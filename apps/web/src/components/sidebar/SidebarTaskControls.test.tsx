@@ -25,7 +25,6 @@ describe("default sidebar task controls", () => {
         searchInputRef={{ current: null }}
         searchResultCount={0}
         activeSearchResultIndex={0}
-        onOpenSearch={vi.fn()}
         onCloseSearch={vi.fn()}
         onSearchQueryChange={vi.fn()}
         onSearchKeyDown={vi.fn()}
@@ -33,7 +32,7 @@ describe("default sidebar task controls", () => {
     );
 
     expect(closed).toContain("T3 Code");
-    expect(closed).toContain('aria-label="Search tasks"');
+    expect(closed).not.toContain('aria-label="Search tasks"');
     expect(closed).not.toContain('role="combobox"');
 
     const open = renderWithSidebar(
@@ -44,7 +43,6 @@ describe("default sidebar task controls", () => {
         searchInputRef={{ current: null }}
         searchResultCount={2}
         activeSearchResultIndex={1}
-        onOpenSearch={vi.fn()}
         onCloseSearch={vi.fn()}
         onSearchQueryChange={vi.fn()}
         onSearchKeyDown={vi.fn()}
@@ -67,7 +65,6 @@ describe("default sidebar task controls", () => {
         searchInputRef={{ current: null }}
         searchResultCount={1}
         activeSearchResultIndex={2}
-        onOpenSearch={vi.fn()}
         onCloseSearch={vi.fn()}
         onSearchQueryChange={vi.fn()}
         onSearchKeyDown={vi.fn()}
@@ -84,13 +81,18 @@ describe("default sidebar task controls", () => {
         projectScopeLabel="t3code"
         projectScopeActive
         projectFilterControl={<button type="button">Filter</button>}
+        searchOpen={false}
+        searchTriggerRef={{ current: null }}
         onNewTask={vi.fn()}
         onNewProject={vi.fn()}
+        onOpenSearch={vi.fn()}
       />,
     );
 
     expect(html).toContain("New chat");
     expect(html).toContain("New project");
+    expect(html).toContain(">Search</span>");
+    expect(html.indexOf(">New project</span>")).toBeLessThan(html.indexOf(">Search</span>"));
     expect(html).toContain("t3code");
     expect(html).toContain('data-project-scope-active="true"');
     expect(html).toContain("Filter");

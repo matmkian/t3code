@@ -3153,11 +3153,9 @@ export default function Sidebar() {
           searchOpen: threadSearchOpen,
           searchQuery: threadSearchQuery,
           searchInputRef: threadSearchInputRef,
-          searchTriggerRef: threadSearchTriggerRef,
           searchResultCount: threadSearchResults.length,
           activeSearchResultIndex,
-          onOpenSearch: openThreadSearch,
-          onCloseSearch: closeThreadSearch,
+          onCloseSearch: closeThreadSearchAndRestoreFocus,
           onSearchQueryChange: handleThreadSearchQueryChange,
           onSearchKeyDown: handleThreadSearchKeyDown,
         }}
@@ -3174,6 +3172,9 @@ export default function Sidebar() {
             }
             onNewTask={handleNewThreadClick}
             onNewProject={openAddProjectCommandPalette}
+            searchOpen={threadSearchOpen}
+            searchTriggerRef={threadSearchTriggerRef}
+            onOpenSearch={openThreadSearch}
             projectFilterControl={
               <Menu open={projectScopeMenuOpen} onOpenChange={setProjectScopeMenuOpen}>
                 <MenuTrigger
