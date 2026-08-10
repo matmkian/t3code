@@ -7,6 +7,9 @@ Select the search button in the sidebar header to find a thread. Press **Escape*
 close button to return to the normal sidebar. The filter beside **Projects** limits the list to one
 project; choose **All projects** to clear the filter.
 
+Development builds use the standard sidebar header. Nightly builds can use environment artwork,
+and either build can instead be identified with a version pill from appearance settings.
+
 The icon beside a thread's project name shows where it runs: a monitor means your local computer,
 and a server means a remote environment.
 

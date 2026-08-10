@@ -12,7 +12,7 @@ export type EnvironmentIdentificationPillLabel = "Dev" | "Nightly";
 // more horizontal canvas instead of zooming the scene.
 const STAGE_BACKDROP_VIEW_BOX = "0 0 8192 96";
 
-export function resolveSidebarStageBackdropVariant(
+export function resolveStageBackdropVariant(
   stageLabel: string,
   enabled = true,
 ): SidebarStageBackdropVariant | null {
@@ -21,6 +21,14 @@ export function resolveSidebarStageBackdropVariant(
   if (normalized === "nightly") return "nightly";
   if (normalized === "dev") return "dev";
   return null;
+}
+
+export function resolveSidebarStageBackdropVariant(
+  stageLabel: string,
+  enabled = true,
+): SidebarStageBackdropVariant | null {
+  const variant = resolveStageBackdropVariant(stageLabel, enabled);
+  return variant === "dev" ? null : variant;
 }
 
 export function resolveEnvironmentIdentificationPillLabel(

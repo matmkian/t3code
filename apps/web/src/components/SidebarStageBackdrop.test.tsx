@@ -4,15 +4,21 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   resolveEnvironmentIdentificationPillLabel,
   resolveSidebarStageBackdropVariant,
+  resolveStageBackdropVariant,
   StageBackdropArt,
 } from "./SidebarStageBackdrop";
 
 describe("SidebarStageBackdrop", () => {
-  it("resolves stage artwork only when enabled", () => {
-    expect(resolveSidebarStageBackdropVariant("Dev")).toBe("dev");
+  it("uses stage artwork only for Nightly sidebars", () => {
+    expect(resolveSidebarStageBackdropVariant("Dev")).toBeNull();
     expect(resolveSidebarStageBackdropVariant("Nightly")).toBe("nightly");
     expect(resolveSidebarStageBackdropVariant("Dev", false)).toBeNull();
     expect(resolveSidebarStageBackdropVariant("Alpha")).toBeNull();
+  });
+
+  it("keeps development artwork available outside the sidebar", () => {
+    expect(resolveStageBackdropVariant("Dev")).toBe("dev");
+    expect(resolveStageBackdropVariant("Nightly")).toBe("nightly");
   });
 
   it("resolves supported environment pill labels", () => {
