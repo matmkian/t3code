@@ -86,6 +86,7 @@ import { selectThreadTerminalUiState, useTerminalUiStateStore } from "../termina
 import { isMacPlatform } from "~/lib/utils";
 import { useOpenPrLink } from "../lib/openPullRequestLink";
 import { readLocalApi } from "../localApi";
+import { isDesktopLocalConnectionTarget } from "../connection/desktopLocal";
 import { getProjectOrderKey, selectProjectGroupingSettings } from "../logicalProject";
 import {
   buildSidebarProjectSnapshots,
@@ -161,6 +162,7 @@ import { SidebarContent, SidebarGroup, useSidebar } from "./ui/sidebar";
 import { SidebarChromeFooter, SidebarChromeHeader } from "./sidebar/SidebarChrome";
 import {
   SidebarProjectFilterButton,
+  SidebarThreadEnvironmentIcon,
   SidebarTaskPrimaryControls,
 } from "./sidebar/SidebarTaskControls";
 import { Popover, PopoverPopup, PopoverTrigger } from "./ui/popover";
@@ -665,7 +667,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
   wokeAt: string | null;
   isActive: boolean;
   jumpLabel: string | null;
-  currentEnvironmentId: string | null;
+  isRemoteEnvironment: boolean;
   environmentLabel: string | null;
   projectCwd: string | null;
   projectFaviconPath: string | null;
@@ -839,9 +841,6 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
     ? getTriggerDisplayModelLabel(selectedModel)
     : thread.modelSelection.model;
   const providerLabel = providerEntry?.displayName ?? thread.session?.providerName ?? modelLabel;
-
-  const isRemote =
-    props.currentEnvironmentId !== null && thread.environmentId !== props.currentEnvironmentId;
 
   const detailsTooltip = (
     <SidebarThreadTooltip
@@ -1253,12 +1252,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
         >
           <div className="relative z-10 flex min-h-[5.25rem] flex-col gap-1 p-3">
             <div className="flex h-5 min-w-0 items-center gap-1.5">
-              <ProjectFavicon
-                environmentId={thread.environmentId}
-                cwd={props.projectCwd ?? ""}
-                faviconPath={props.projectFaviconPath}
-                className="size-3 shrink-0"
-              />
+              <SidebarThreadEnvironmentIcon isRemote={props.isRemoteEnvironment} />
               {props.projectTitle ? (
                 <span className="min-w-0 flex-1 truncate font-normal text-secondary-label text-xs">
                   {props.projectTitle}
@@ -1399,7 +1393,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                   branch, so the row lost its most stable identifier. */}
               {thread.branch ? (
                 <>
-                  <ThreadWorktreeIndicator thread={thread} />
+                  <ThreadWorktreeIndicator thread={thread} showCurrentCheckout />
                   <span className="min-w-0 flex-1 truncate whitespace-nowrap">{thread.branch}</span>
                 </>
               ) : (
@@ -1413,16 +1407,6 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                   <span className="text-red-600 dark:text-red-400">−{diff.deletions}</span>
                 </span>
               ) : null}
-              <span
-                aria-hidden
-                className="pointer-events-none ml-auto inline-flex shrink-0 items-center gap-1"
-              >
-                {isRemote ? (
-                  <span className="inline-flex shrink-0 items-center text-sidebar-muted-foreground/70">
-                    <ServerIcon aria-hidden className="size-3.5" />
-                  </span>
-                ) : null}
-              </span>
             </div>
           </div>
           {props.jumpLabel ? <JumpHintBadge label={props.jumpLabel} /> : null}
@@ -1654,6 +1638,16 @@ export default function Sidebar() {
       ),
     [environments],
   );
+  const localEnvironmentIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (primaryEnvironmentId !== null) ids.add(primaryEnvironmentId);
+    for (const environment of environments) {
+      if (isDesktopLocalConnectionTarget(environment.entry.target)) {
+        ids.add(environment.environmentId);
+      }
+    }
+    return ids;
+  }, [environments, primaryEnvironmentId]);
   const orderedProjects = useMemo(
     () =>
       orderItemsByPreferredIds({
@@ -3373,7 +3367,10 @@ export default function Sidebar() {
                         wokeAt={threadWokeAt(thread, { now: snoozeNow })}
                         isActive={routeThreadKey === threadKey}
                         jumpLabel={showJumpHints ? (jumpLabelByKey.get(threadKey) ?? null) : null}
-                        currentEnvironmentId={primaryEnvironmentId}
+                        isRemoteEnvironment={
+                          primaryEnvironmentId !== null &&
+                          !localEnvironmentIds.has(thread.environmentId)
+                        }
                         environmentLabel={environmentLabelById.get(thread.environmentId) ?? null}
                         projectCwd={
                           projectCwdByKey.get(`${thread.environmentId}:${thread.projectId}`) ?? null

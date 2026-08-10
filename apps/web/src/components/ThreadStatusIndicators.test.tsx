@@ -21,6 +21,24 @@ describe("ThreadWorktreeIndicator", () => {
       'aria-label="Worktree: sidebar-indicator (feature/sidebar-indicator)"',
     );
     expect(markup).toContain('data-testid="thread-worktree-thread-1"');
+    expect(markup).toContain("lucide-folder-git-2");
+  });
+
+  it("renders the current checkout when requested", () => {
+    const markup = renderToStaticMarkup(
+      <ThreadWorktreeIndicator
+        showCurrentCheckout
+        thread={{
+          id: ThreadId.make("thread-1"),
+          branch: "main",
+          worktreePath: null,
+        }}
+      />,
+    );
+
+    expect(markup).toContain('aria-label="Current checkout: main"');
+    expect(markup).toContain('data-testid="thread-checkout-thread-1"');
+    expect(markup).toContain("lucide-git-branch");
   });
 
   it.each([null, "", "   "])("renders nothing for an absent worktree path", (worktreePath) => {

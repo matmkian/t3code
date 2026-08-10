@@ -7,6 +7,12 @@ Select the search button in the sidebar header to find a thread. Press **Escape*
 close button to return to the normal sidebar. The filter beside **Projects** limits the list to one
 project; choose **All projects** to clear the filter.
 
+The icon beside a thread's project name shows where it runs: a monitor means your local computer,
+and a server means a remote environment.
+
+The icon beside the branch name shows how the thread is checked out: a branch means the current
+checkout, and a folder with a branch means a worktree.
+
 Pin a thread from its context menu to keep it in the pinned section above your active work.
 Pinned threads are shown independently of their project, including when you connect to more than
 one environment.

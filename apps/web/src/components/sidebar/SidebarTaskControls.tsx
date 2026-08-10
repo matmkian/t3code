@@ -1,4 +1,12 @@
-import { ListFilterIcon, SearchIcon, SquarePenIcon, FolderPlusIcon, XIcon } from "lucide-react";
+import {
+  FolderPlusIcon,
+  ListFilterIcon,
+  MonitorIcon,
+  SearchIcon,
+  ServerIcon,
+  SquarePenIcon,
+  XIcon,
+} from "lucide-react";
 import {
   memo,
   type ChangeEventHandler,
@@ -18,6 +26,23 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
+
+export const SidebarThreadEnvironmentIcon = memo(function SidebarThreadEnvironmentIcon({
+  isRemote,
+}: {
+  isRemote: boolean;
+}) {
+  const Icon = isRemote ? ServerIcon : MonitorIcon;
+  const label = isRemote ? "Remote environment" : "Local environment";
+
+  return (
+    <Icon
+      role="img"
+      aria-label={label}
+      className="size-3 shrink-0 text-sidebar-muted-foreground/70"
+    />
+  );
+});
 
 export const SidebarTaskHeaderContent = memo(function SidebarTaskHeaderContent(props: {
   brand: ReactNode;

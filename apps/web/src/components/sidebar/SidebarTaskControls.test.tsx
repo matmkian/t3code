@@ -6,6 +6,7 @@ import { SidebarProvider } from "../ui/sidebar";
 import { SidebarFooterNavigation } from "./SidebarChrome";
 import {
   SidebarProjectFilterButton,
+  SidebarThreadEnvironmentIcon,
   SidebarTaskHeaderContent,
   SidebarTaskPrimaryControls,
 } from "./SidebarTaskControls";
@@ -116,5 +117,15 @@ describe("default sidebar task controls", () => {
     expect(html).toContain("Usage");
     expect(html).toContain("Settings");
     expect(html.indexOf("Usage")).toBeLessThan(html.indexOf("Settings"));
+  });
+
+  it("distinguishes local and remote thread environments", () => {
+    const local = renderWithSidebar(<SidebarThreadEnvironmentIcon isRemote={false} />);
+    const remote = renderWithSidebar(<SidebarThreadEnvironmentIcon isRemote />);
+
+    expect(local).toContain('aria-label="Local environment"');
+    expect(local).not.toContain('aria-label="Remote environment"');
+    expect(remote).toContain('aria-label="Remote environment"');
+    expect(remote).not.toContain('aria-label="Local environment"');
   });
 });
