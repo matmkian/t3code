@@ -1,5 +1,12 @@
 # Organizing threads
 
+On web and desktop, the default sidebar organizes threads into **Active** and **Settled** sections.
+Use **New chat** to start a thread or **New project** to add another project.
+
+Select the search button in the sidebar header to find a thread. Press **Escape** or select the
+close button to return to the normal sidebar. The filter beside **Projects** limits the list to one
+project; choose **All projects** to clear the filter.
+
 Pin a thread from its context menu to keep it in the pinned section above your active work.
 Pinned threads are shown independently of their project, including when you connect to more than
 one environment.

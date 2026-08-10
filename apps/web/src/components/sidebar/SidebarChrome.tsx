@@ -1,5 +1,5 @@
 import { ChartNoAxesColumnIcon, SettingsIcon } from "lucide-react";
-import { memo, useCallback } from "react";
+import { memo, useCallback, type ComponentProps } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import { useEnvironmentIdentificationMode } from "../../hooks/useSettings";
@@ -21,12 +21,15 @@ import {
   useSidebar,
 } from "../ui/sidebar";
 import { SidebarProviderUpdatePill } from "./SidebarProviderUpdatePill";
+import { SidebarTaskHeaderContent } from "./SidebarTaskControls";
 import { SidebarUpdatePill } from "./SidebarUpdatePill";
 
 export const SidebarChromeHeader = memo(function SidebarChromeHeader({
   isElectron,
+  taskSearch,
 }: {
   isElectron: boolean;
+  taskSearch?: Omit<ComponentProps<typeof SidebarTaskHeaderContent>, "brand">;
 }) {
   const stageLabel = useEnvironmentStageLabel();
   const environmentIdentificationMode = useEnvironmentIdentificationMode();
@@ -38,6 +41,12 @@ export const SidebarChromeHeader = memo(function SidebarChromeHeader({
     environmentIdentificationMode === "pill"
       ? resolveEnvironmentIdentificationPillLabel(stageLabel)
       : null;
+  const brand = (
+    <>
+      <SidebarBrand onBackdrop={backdropVariant !== null} />
+      {pillLabel ? <EnvironmentPill label={pillLabel} /> : null}
+    </>
+  );
 
   return (
     <SidebarHeader
@@ -54,20 +63,23 @@ export const SidebarChromeHeader = memo(function SidebarChromeHeader({
             "[:hover,[data-pressed]]:bg-white/15 focus-visible:ring-white/90 focus-visible:ring-offset-blue-700 [&_svg]:stroke-white/90! [&_svg]:opacity-100! [&_svg]:hover:stroke-white!",
         )}
       />
-      <SidebarBrand onBackdrop={backdropVariant !== null} />
-      {pillLabel ? (
-        <Badge
-          className="relative z-10 ml-1 rounded-full px-1.5 text-muted-foreground"
-          data-environment-identification="pill"
-          size="sm"
-          variant="secondary"
-        >
-          {pillLabel}
-        </Badge>
-      ) : null}
+      {taskSearch ? <SidebarTaskHeaderContent {...taskSearch} brand={brand} /> : brand}
     </SidebarHeader>
   );
 });
+
+function EnvironmentPill({ label }: { label: string }) {
+  return (
+    <Badge
+      className="relative z-10 ml-1 rounded-full px-1.5 text-muted-foreground"
+      data-environment-identification="pill"
+      size="sm"
+      variant="secondary"
+    >
+      {label}
+    </Badge>
+  );
+}
 
 function SidebarBrand({ onBackdrop }: { onBackdrop: boolean }) {
   return (
@@ -129,20 +141,32 @@ export const SidebarChromeFooter = memo(function SidebarChromeFooter() {
     <SidebarFooter className="p-[var(--sidebar-content-inset)]">
       <SidebarProviderUpdatePill />
       <SidebarUpdatePill />
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton onClick={handleUsageClick}>
-            <ChartNoAxesColumnIcon />
-            <span>Usage</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-          <SidebarMenuButton onClick={handleSettingsClick}>
-            <SettingsIcon />
-            <span>Settings</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+      <SidebarFooterNavigation onUsage={handleUsageClick} onSettings={handleSettingsClick} />
     </SidebarFooter>
+  );
+});
+
+export const SidebarFooterNavigation = memo(function SidebarFooterNavigation({
+  onSettings,
+  onUsage,
+}: {
+  onSettings: () => void;
+  onUsage: () => void;
+}) {
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton onClick={onUsage}>
+          <ChartNoAxesColumnIcon />
+          <span>Usage</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton onClick={onSettings}>
+          <SettingsIcon />
+          <span>Settings</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 });

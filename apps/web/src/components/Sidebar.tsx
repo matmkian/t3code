@@ -40,12 +40,10 @@ import {
   CircleDashedIcon,
   ClockIcon,
   FolderIcon,
-  FolderPlusIcon,
   GitBranchIcon,
   MessageSquareIcon,
   PinIcon,
   PlusIcon,
-  SearchIcon,
   ServerIcon,
   SettingsIcon,
   SquarePenIcon,
@@ -60,6 +58,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ChangeEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
@@ -126,7 +125,6 @@ import {
   orderItemsByPreferredIds,
   planPinnedReorder,
   resolveAdjacentThreadId,
-  resolveSettledTimestamp,
   resolveSidebarThreadStatus,
   searchSidebarThreadsByTitle,
   resolveWorkingStartedAt,
@@ -157,11 +155,14 @@ import { deriveProviderInstanceEntries, type ProviderInstanceEntry } from "../pr
 import { primaryServerProvidersAtom } from "../state/server";
 import { useThreadRunningTerminalIds } from "../state/terminalSessions";
 import { stackedThreadToast, toastManager } from "./ui/toast";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+import { Badge } from "./ui/badge";
 import { Menu, MenuPopup, MenuRadioGroup, MenuRadioItem, MenuTrigger } from "./ui/menu";
-import { SidebarContent, SidebarGroup, SidebarMenuButton, useSidebar } from "./ui/sidebar";
+import { SidebarContent, SidebarGroup, useSidebar } from "./ui/sidebar";
 import { SidebarChromeFooter, SidebarChromeHeader } from "./sidebar/SidebarChrome";
+import {
+  SidebarProjectFilterButton,
+  SidebarTaskPrimaryControls,
+} from "./sidebar/SidebarTaskControls";
 import { Popover, PopoverPopup, PopoverTrigger } from "./ui/popover";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import {
@@ -185,14 +186,6 @@ function compactSidebarTimeLabel(label: string): string {
 function threadTimeLabel(thread: SidebarThreadSummary): string {
   const timestamp = thread.latestUserMessageAt ?? thread.updatedAt;
   return compactSidebarTimeLabel(formatRelativeTimeLabel(timestamp));
-}
-
-// Settled rows read "how long ago did this wrap up", matching their sort
-// key: both go through resolveSettledTimestamp so label and order can't
-// disagree.
-function settledTimeLabel(thread: SidebarThreadSummary): string {
-  const timestamp = resolveSettledTimestamp(thread);
-  return timestamp === null ? "" : compactSidebarTimeLabel(formatRelativeTimeLabel(timestamp));
 }
 
 // Floats at the row's right edge, vertically centered, while the jump
@@ -767,69 +760,57 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
     (lastVisitedDate === null || lastVisitedDate < wokeAtDate) &&
     prState !== "merged" &&
     prState !== "closed";
-  // In-flight rows (working, or waiting on approval/input) fade as a whole:
-  // there is nothing for the user to do yet, so prominence is reserved for
-  // rows that need a human — done (unread), read-but-unsettled, failed, and
-  // freshly woken. The status label keeps its hue, so waiting rows stay
-  // findable. In-flight rows recede the same as read-ready ones (inbox-zero:
-  // working threads aren't your problem yet) — only the colored status label
-  // stands out.
+  // In-flight and read-ready rows use the quieter title weight while the
+  // semantic badge carries their state. Unread completions and freshly woken
+  // work keep the stronger title treatment so the inbox remains scannable.
   const isInFlight =
     status === "working" || status === "monitoring" || status === "approval" || status === "input";
   const shouldRecede =
     (status === "ready" || isInFlight) && !isUnread && !isWoke && !props.isActive && !isSelected;
-  // Status hues follow the system-wide convention set by sidebar v1 and the
-  // mobile Live Activity/widgets (amber approval, indigo input, sky working)
-  // so a thread reads the same color everywhere it surfaces.
+  // Badges use the app's semantic status variants so the same state keeps its
+  // meaning across palette themes without sidebar-only color overrides.
   const topStatus =
     status === "working"
       ? {
           label: "Working",
           icon: "working" as const,
-          // No shimmer: a label that animates forever is noise in a sidebar
-          // full of them (and repaints every vsync on high-refresh displays).
-          // Working is a background state, so it rests at the dim end of what
-          // the old pulse cycled through; only the thread you have open gets
-          // the label at full strength.
-          className: cn("text-sky-600 dark:text-sky-400", !props.isActive && "opacity-75"),
+          variant: "info" as const,
         }
       : status === "monitoring"
         ? {
-            // Monitoring is calm background presence, not active progress
-            // (monitoring-pill D6), so it keeps the label at full strength.
             label: "Monitoring",
             icon: null,
-            className: "text-sky-600 dark:text-sky-400",
+            variant: "info" as const,
           }
         : status === "approval"
           ? {
               label: "Approval",
               icon: null,
-              className: "text-amber-700 dark:text-amber-300",
+              variant: "warning" as const,
             }
           : status === "input"
             ? {
                 label: "Input",
                 icon: null,
-                className: "text-indigo-600 dark:text-indigo-300",
+                variant: "info" as const,
               }
             : status === "failed"
               ? {
                   label: "Failed",
                   icon: null,
-                  className: "text-red-700 dark:text-red-300",
+                  variant: "error" as const,
                 }
               : isWoke
                 ? {
                     label: "Woke",
                     icon: "woke" as const,
-                    className: "text-amber-700 dark:text-amber-300",
+                    variant: "warning" as const,
                   }
                 : isUnread
                   ? {
                       label: "Done",
                       icon: "done" as const,
-                      className: "text-emerald-700 dark:text-emerald-300",
+                      variant: "success" as const,
                     }
                   : null;
   const isWokeStatus = topStatus?.icon === "woke";
@@ -857,6 +838,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
   const modelLabel = selectedModel
     ? getTriggerDisplayModelLabel(selectedModel)
     : thread.modelSelection.model;
+  const providerLabel = providerEntry?.displayName ?? thread.session?.providerName ?? modelLabel;
 
   const isRemote =
     props.currentEnvironmentId !== null && thread.environmentId !== props.currentEnvironmentId;
@@ -1004,23 +986,19 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
     [openPrLink, pr],
   );
 
-  // All sidebar rows share one surface model. Live threads used to look
-  // like elevated cards while settled threads were plain rows, leaving neither
-  // a useful hierarchy nor a reliable hover cue. Status now lives in the row
-  // content; surface is reserved for interaction (hover, multi-select, route).
+  // Active work uses the Figma card silhouette; quiet shelves stay compact.
+  // Surface remains interaction-driven: only route, selection, and hover fill
+  // the card, so a long inbox does not become a wall of raised containers.
   const rowSurfaceClassName = cn(
-    "group/sidebar-row relative w-full cursor-pointer overflow-hidden rounded-md text-left outline-none select-none",
+    "group/sidebar-row relative w-full cursor-pointer overflow-hidden text-left outline-none select-none",
+    variant === "card" ? "rounded-lg" : "rounded-md",
     props.isActive
-      ? "bg-sidebar-row-active text-sidebar-foreground"
+      ? "bg-sidebar-control-surface text-sidebar-foreground"
       : isSelected
-        ? "bg-sidebar-row-selected text-sidebar-foreground"
+        ? "bg-sidebar-control-surface text-sidebar-foreground"
         : shouldRecede
           ? "text-sidebar-muted-foreground/75 hover:bg-sidebar-row-hover hover:text-sidebar-foreground"
           : "bg-transparent text-sidebar-foreground hover:bg-sidebar-row-hover",
-    isInFlight &&
-      !props.isActive &&
-      !isSelected &&
-      "opacity-70 transition-opacity hover:opacity-100",
   );
 
   const title = isRenaming ? (
@@ -1112,7 +1090,12 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                 tabIndex={0}
                 data-testid="sidebar-row-slim"
                 aria-busy={isRegeneratingTitle || undefined}
-                className={cn(rowSurfaceClassName, "flex h-9 items-center gap-2.5 px-2.5")}
+                className={cn(
+                  rowSurfaceClassName,
+                  variantAction === "unsettle"
+                    ? "flex h-8 items-center px-2"
+                    : "flex h-9 items-center gap-2.5 px-2.5",
+                )}
                 onClick={handleClick}
                 onDoubleClick={handleDoubleClick}
                 onKeyDown={handleKeyDown}
@@ -1120,23 +1103,23 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
               />
             }
           >
-            {/* Settled history recedes: dimmed favicon at rest, restored on
-              hover so the tail stays scannable when you're hunting. */}
-            <span
-              className={cn(
-                "shrink-0 transition-opacity",
-                !props.isActive &&
-                  "opacity-40 grayscale group-hover/sidebar-row:opacity-100 group-hover/sidebar-row:grayscale-0",
-              )}
-            >
-              <ProjectFavicon
-                environmentId={thread.environmentId}
-                cwd={props.projectCwd ?? ""}
-                faviconPath={props.projectFaviconPath}
-                className="size-4"
-                fallbackIcon={MessageSquareIcon}
-              />
-            </span>
+            {variantAction === "unsettle" ? null : (
+              <span
+                className={cn(
+                  "shrink-0 transition-opacity",
+                  !props.isActive &&
+                    "opacity-40 grayscale group-hover/sidebar-row:opacity-100 group-hover/sidebar-row:grayscale-0",
+                )}
+              >
+                <ProjectFavicon
+                  environmentId={thread.environmentId}
+                  cwd={props.projectCwd ?? ""}
+                  faviconPath={props.projectFaviconPath}
+                  className="size-4"
+                  fallbackIcon={MessageSquareIcon}
+                />
+              </span>
+            )}
             {title}
             {terminalStatusIcon}
             {isRegeneratingTitle ? (
@@ -1148,7 +1131,12 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
               remain visible AND clickable while the row is hovered. Only
               the time/jump label yields to the settle affordance. */}
             {prBadge}
-            <span className="relative ml-auto flex h-6 min-w-8 shrink-0 items-center justify-end">
+            <span
+              className={cn(
+                "relative ml-auto flex h-6 shrink-0 items-center justify-end",
+                variantAction === "unsettle" ? "min-w-0" : "min-w-8",
+              )}
+            >
               <span
                 className={cn(
                   "inline-flex justify-end tabular-nums text-secondary-label transition-opacity",
@@ -1174,12 +1162,8 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                     <AlarmClockIcon aria-hidden className="size-3" />
                     <span role="status">Woke</span>
                   </button>
-                ) : (
-                  <span className="text-xs">
-                    {variantAction === "unsettle"
-                      ? settledTimeLabel(thread)
-                      : threadTimeLabel(thread)}
-                  </span>
+                ) : variantAction === "unsettle" ? null : (
+                  <span className="text-xs">{threadTimeLabel(thread)}</span>
                 )}
               </span>
               {variantAction === "unsnooze" ? (
@@ -1247,7 +1231,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
       }
       {...(sortable?.listeners ?? {})}
       className={cn(
-        "list-none py-0.5 [content-visibility:auto] [contain-intrinsic-size:auto_96px]",
+        "list-none py-0.5 [content-visibility:auto] [contain-intrinsic-size:auto_88px]",
         sortable?.isDragging && "z-20 opacity-80",
       )}
     >
@@ -1267,21 +1251,16 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
             />
           }
         >
-          <div className="relative z-10 h-[4.875rem] px-[var(--sidebar-row-content-inset)] py-[var(--sidebar-content-inset)]">
+          <div className="relative z-10 flex min-h-[5.25rem] flex-col gap-1 p-3">
             <div className="flex h-5 min-w-0 items-center gap-1.5">
               <ProjectFavicon
                 environmentId={thread.environmentId}
                 cwd={props.projectCwd ?? ""}
                 faviconPath={props.projectFaviconPath}
-                className="size-4 shrink-0"
+                className="size-3 shrink-0"
               />
               {props.projectTitle ? (
-                <span
-                  className={cn(
-                    "min-w-0 flex-1 truncate text-secondary-label text-xs",
-                    shouldRecede ? "font-normal" : "font-medium",
-                  )}
-                >
+                <span className="min-w-0 flex-1 truncate font-normal text-secondary-label text-xs">
                   {props.projectTitle}
                 </span>
               ) : (
@@ -1306,6 +1285,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                   />
                 )
               ) : null}
+              <Badge variant="outline" title={providerLabel} className="h-5 max-w-20 px-2">
+                <span className="truncate">{providerLabel}</span>
+              </Badge>
               {/* The visible state owns this slot's width: status at rest,
                   actions on hover/keyboard focus or while the popover is open. Keeping
                   the hidden state out of flow lets the project label reclaim
@@ -1325,44 +1307,47 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                 >
                   {topStatus ? (
                     isWokeStatus ? (
-                      <button
-                        type="button"
-                        aria-label="Dismiss Woke notification"
-                        title="Dismiss Woke notification"
-                        onClick={handleAcknowledgeWokeClick}
-                        className={cn(
-                          "inline-flex cursor-pointer items-center gap-1 rounded-sm font-medium outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring",
-                          topStatus.className,
-                        )}
+                      <Badge
+                        variant={topStatus.variant}
+                        className="h-5 px-2"
+                        render={
+                          <button
+                            type="button"
+                            aria-label="Dismiss Woke notification"
+                            title="Dismiss Woke notification"
+                            onClick={handleAcknowledgeWokeClick}
+                          />
+                        }
                       >
-                        <AlarmClockIcon aria-hidden className="size-4 shrink-0" />
+                        <AlarmClockIcon aria-hidden />
                         <span role="status">{topStatus.label}</span>
-                      </button>
+                      </Badge>
                     ) : (
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 font-medium",
-                          topStatus.className,
-                        )}
-                      >
+                      <Badge variant={topStatus.variant} className="h-5 px-2">
                         {topStatus.icon === "working" ? (
-                          <CircleDashedIcon aria-hidden className="size-4 shrink-0" />
+                          <CircleDashedIcon aria-hidden />
                         ) : topStatus.icon === "done" ? (
-                          <CircleCheckIcon aria-hidden className="size-4 shrink-0" />
+                          <CircleCheckIcon aria-hidden />
                         ) : null}
-                        {/* The label alone is the live region: a role="status"
-                            wrapper around the ticking duration would make
-                            screen readers announce every second. */}
-                        <span role="status">{topStatus.label}</span>
                         {status === "working" ? (
-                          <span aria-hidden>
-                            <WorkingDuration startedAt={resolveWorkingStartedAt(thread)} />
-                          </span>
-                        ) : null}
-                      </span>
+                          <>
+                            <span role="status" className="sr-only">
+                              Working
+                            </span>
+                            <span aria-hidden>
+                              <WorkingDuration startedAt={resolveWorkingStartedAt(thread)} />
+                            </span>
+                          </>
+                        ) : (
+                          <span role="status">{topStatus.label}</span>
+                        )}
+                      </Badge>
                     )
                   ) : (
-                    threadTimeLabel(thread)
+                    <Badge variant="outline" className="h-5 px-2">
+                      <ClockIcon aria-hidden />
+                      <span>{threadTimeLabel(thread)}</span>
+                    </Badge>
                   )}
                 </span>
                 {props.settlementSupported || showSnoozeButton ? (
@@ -1400,7 +1385,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                 ) : null}
               </span>
             </div>
-            <div className="mt-1 flex min-w-0">
+            <div className="flex min-w-0 leading-5">
               {title}
               {isRegeneratingTitle ? (
                 <span role="status" className="sr-only">
@@ -1408,7 +1393,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                 </span>
               ) : null}
             </div>
-            <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-secondary-label text-xs">
+            <div className="flex min-w-0 items-center gap-1.5 text-secondary-label text-xs">
               {/* Always the branch. The plan step used to take this slot while
                   working, but it truncated to a half-sentence and dropped the
                   branch, so the row lost its most stable identifier. */}
@@ -1435,15 +1420,6 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                 {isRemote ? (
                   <span className="inline-flex shrink-0 items-center text-sidebar-muted-foreground/70">
                     <ServerIcon aria-hidden className="size-3.5" />
-                  </span>
-                ) : null}
-                {driverKind ? (
-                  <span className="inline-flex shrink-0 items-center opacity-60">
-                    <ProviderInstanceIcon
-                      driverKind={driverKind}
-                      displayName={thread.session?.providerName ?? modelInstanceId}
-                      iconClassName="size-3.5"
-                    />
                   </span>
                 ) : null}
               </span>
@@ -1957,6 +1933,8 @@ export default function Sidebar() {
   ]);
 
   const threadSearchInputRef = useRef<HTMLInputElement>(null);
+  const threadSearchTriggerRef = useRef<HTMLButtonElement>(null);
+  const [threadSearchOpen, setThreadSearchOpen] = useState(false);
   const [threadSearchQuery, setThreadSearchQuery] = useState("");
   const [activeSearchResultIndex, setActiveSearchResultIndex] = useState(0);
   const isSearchingThreads = threadSearchQuery.trim().length > 0;
@@ -2175,22 +2153,38 @@ export default function Sidebar() {
     setThreadSearchQuery("");
     setActiveSearchResultIndex(0);
   }, []);
+  const openThreadSearch = useCallback(() => {
+    setThreadSearchOpen(true);
+    window.requestAnimationFrame(() => threadSearchInputRef.current?.focus());
+  }, []);
+  const closeThreadSearch = useCallback(() => {
+    clearThreadSearch();
+    setThreadSearchOpen(false);
+  }, [clearThreadSearch]);
+  const closeThreadSearchAndRestoreFocus = useCallback(() => {
+    closeThreadSearch();
+    window.requestAnimationFrame(() => threadSearchTriggerRef.current?.focus());
+  }, [closeThreadSearch]);
+  const handleThreadSearchQueryChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setThreadSearchQuery(event.currentTarget.value);
+    setActiveSearchResultIndex(0);
+  }, []);
   const selectThreadSearchResult = useCallback(
     (thread: EnvironmentThreadShell) => {
-      clearThreadSearch();
+      closeThreadSearch();
       navigateToThread(scopeThreadRef(thread.environmentId, thread.id));
     },
-    [clearThreadSearch, navigateToThread],
+    [closeThreadSearch, navigateToThread],
   );
   const handleThreadSearchKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLInputElement>) => {
       // IME composition (Japanese/Chinese input) uses the same keys; committing
       // a candidate must not move the highlight or navigate away mid-compose.
       if (event.nativeEvent.isComposing || event.keyCode === 229) return;
-      if (event.key === "Escape" && isSearchingThreads) {
+      if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
-        clearThreadSearch();
+        closeThreadSearchAndRestoreFocus();
         return;
       }
       if (threadSearchResults.length === 0) return;
@@ -2214,8 +2208,7 @@ export default function Sidebar() {
     },
     [
       activeSearchResultIndex,
-      clearThreadSearch,
-      isSearchingThreads,
+      closeThreadSearchAndRestoreFocus,
       selectThreadSearchResult,
       threadSearchResults,
     ],
@@ -3160,189 +3153,98 @@ export default function Sidebar() {
     shortcutLabelForCommand(keybindings, "chat.newLocal");
   return (
     <>
-      <SidebarChromeHeader isElectron={isElectron} />
+      <SidebarChromeHeader
+        isElectron={isElectron}
+        taskSearch={{
+          searchOpen: threadSearchOpen,
+          searchQuery: threadSearchQuery,
+          searchInputRef: threadSearchInputRef,
+          searchTriggerRef: threadSearchTriggerRef,
+          searchResultCount: threadSearchResults.length,
+          activeSearchResultIndex,
+          onOpenSearch: openThreadSearch,
+          onCloseSearch: closeThreadSearch,
+          onSearchQueryChange: handleThreadSearchQueryChange,
+          onSearchKeyDown: handleThreadSearchKeyDown,
+        }}
+      />
       <SidebarContent
         className="gap-0"
         fixedHeader={
-          // Lifted above the stage backdrop, whose fade bleeds below the
-          // header and would otherwise paint across the search row's outline.
-          <SidebarGroup className="relative z-[1] gap-1 p-[var(--sidebar-content-inset)]">
-            <div className="flex items-center gap-1">
-              <div className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground">
-                <SearchIcon className="size-4 shrink-0 text-sidebar-muted-foreground/80" />
-                <Input
-                  ref={threadSearchInputRef}
-                  nativeInput
-                  unstyled
-                  type="search"
-                  value={threadSearchQuery}
-                  onChange={(event) => {
-                    setThreadSearchQuery(event.currentTarget.value);
-                    setActiveSearchResultIndex(0);
-                  }}
-                  onKeyDown={handleThreadSearchKeyDown}
-                  placeholder="Search"
-                  aria-label="Search threads"
-                  role="combobox"
-                  aria-autocomplete="list"
-                  aria-expanded={isSearchingThreads && threadSearchResults.length > 0}
-                  aria-controls={
-                    isSearchingThreads && threadSearchResults.length > 0
-                      ? "sidebar-thread-search-results"
-                      : undefined
-                  }
-                  aria-activedescendant={
-                    isSearchingThreads && threadSearchResults[activeSearchResultIndex]
-                      ? `sidebar-thread-search-result-${activeSearchResultIndex}`
-                      : undefined
-                  }
-                  className="min-w-0 flex-1 [&_[data-slot=input]]:h-auto [&_[data-slot=input]]:p-0 [&_[data-slot=input]]:leading-normal [&_[data-slot=input]]:text-sm [&_[data-slot=input]]:font-medium [&_[data-slot=input]]:text-sidebar-foreground [&_[data-slot=input]]:placeholder:text-sidebar-muted-foreground"
-                />
-                {isSearchingThreads ? (
-                  <Button
-                    type="button"
-                    size="icon-xs"
-                    variant="ghost"
-                    className="size-5 shrink-0 rounded-sm text-sidebar-muted-foreground hover:bg-sidebar-control-surface hover:text-sidebar-foreground"
-                    aria-label="Clear thread search"
-                    onClick={() => {
-                      clearThreadSearch();
-                      threadSearchInputRef.current?.focus();
-                    }}
-                  >
-                    <XIcon className="size-3" />
-                  </Button>
-                ) : null}
-              </div>
-              <div className="shrink-0">
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <SidebarMenuButton
-                        size="icon"
-                        type="button"
-                        className="relative focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
-                        onClick={handleNewThreadClick}
-                        disabled={projects.length === 0}
-                        aria-label="New thread"
-                      />
-                    }
-                  >
-                    <SquarePenIcon />
-                    <span
-                      className="pointer-events-none absolute left-1/2 top-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
-                      aria-hidden="true"
-                    />
-                  </TooltipTrigger>
-                  <TooltipPopup side="right">
-                    {newThreadShortcutLabel
-                      ? `New thread (${newThreadShortcutLabel})`
-                      : "New thread"}
-                  </TooltipPopup>
-                </Tooltip>
-              </div>
-            </div>
-            {projectGroups.length > 0 ? (
-              <div className="flex items-center gap-1">
-                <Menu open={projectScopeMenuOpen} onOpenChange={setProjectScopeMenuOpen}>
-                  <MenuTrigger
-                    render={
-                      <SidebarMenuButton
-                        aria-label="Filter threads by project"
-                        className="min-w-0 flex-1 ps-[calc(var(--sidebar-row-content-inset)-1px)] focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
-                      />
-                    }
-                  >
-                    {scopedProjectGroup ? (
-                      <ProjectFavicon
-                        environmentId={scopedProjectGroup.environmentId}
-                        cwd={scopedProjectGroup.workspaceRoot}
-                        faviconPath={scopedProjectGroup.faviconPath}
-                        className="size-4 shrink-0"
-                      />
-                    ) : (
-                      <FolderIcon className="size-4 shrink-0" />
-                    )}
-                    <span className="min-w-0 flex-1 truncate">
-                      {scopedProjectGroup?.displayName ?? "All projects"}
-                    </span>
-                    <ChevronDownIcon className="-mr-px size-4 shrink-0" />
-                  </MenuTrigger>
-                  <MenuPopup align="start" className="w-(--anchor-width)">
-                    <MenuRadioGroup
-                      value={projectScopeKey ?? "all"}
-                      onValueChange={(value) =>
-                        setProjectScopeKey(value === "all" ? null : (value as string))
+          <SidebarTaskPrimaryControls
+            canStartTask={projects.length > 0}
+            projectScopeLabel={scopedProjectGroup?.displayName ?? "Projects"}
+            projectScopeActive={scopedProjectGroup !== null}
+            newTaskTitle={
+              newThreadShortcutLabel ? `New chat (${newThreadShortcutLabel})` : "New chat"
+            }
+            onNewTask={handleNewThreadClick}
+            onNewProject={openAddProjectCommandPalette}
+            projectFilterControl={
+              <Menu open={projectScopeMenuOpen} onOpenChange={setProjectScopeMenuOpen}>
+                <MenuTrigger
+                  render={
+                    <SidebarProjectFilterButton
+                      active={scopedProjectGroup !== null}
+                      label={
+                        scopedProjectGroup
+                          ? `Filter tasks by project, currently ${scopedProjectGroup.displayName}`
+                          : "Filter tasks by project"
                       }
+                    />
+                  }
+                />
+                <MenuPopup align="end" className="min-w-56">
+                  <MenuRadioGroup
+                    value={projectScopeKey ?? "all"}
+                    onValueChange={(value) =>
+                      setProjectScopeKey(value === "all" ? null : (value as string))
+                    }
+                  >
+                    <MenuRadioItem
+                      value="all"
+                      closeOnClick
+                      className="h-8 min-h-8 px-1 py-0 text-sm font-medium [&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
                     >
+                      <FolderIcon className="size-4 shrink-0" />
+                      <span className="min-w-0 truncate text-sm">All projects</span>
+                    </MenuRadioItem>
+                    {projectGroups.map((project) => (
                       <MenuRadioItem
-                        value="all"
+                        key={project.projectKey}
+                        value={project.projectKey}
                         closeOnClick
                         className="h-8 min-h-8 px-1 py-0 text-sm font-medium [&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
                       >
-                        <FolderIcon className="size-4 shrink-0" />
-                        <span className="min-w-0 truncate text-sm">All projects</span>
+                        <ProjectFavicon
+                          environmentId={project.environmentId}
+                          cwd={project.workspaceRoot}
+                          faviconPath={project.faviconPath}
+                          className="size-4 shrink-0"
+                        />
+                        <span className="min-w-0 truncate text-sm">{project.displayName}</span>
+                        <button
+                          type="button"
+                          aria-label={`Project settings for ${project.displayName}`}
+                          title={`Project settings for ${project.displayName}`}
+                          className="ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-icon-muted outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            void handleProjectSettings(event, project);
+                          }}
+                        >
+                          <SettingsIcon className="size-3.5" />
+                        </button>
                       </MenuRadioItem>
-                      {projectGroups.map((project) => {
-                        const scopeKey = project.projectKey;
-                        return (
-                          <MenuRadioItem
-                            key={scopeKey}
-                            value={scopeKey}
-                            closeOnClick
-                            className="h-8 min-h-8 px-1 py-0 text-sm font-medium [&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
-                          >
-                            <ProjectFavicon
-                              environmentId={project.environmentId}
-                              cwd={project.workspaceRoot}
-                              faviconPath={project.faviconPath}
-                              className="size-4 shrink-0"
-                            />
-                            <span className="min-w-0 truncate text-sm">{project.displayName}</span>
-                            <button
-                              type="button"
-                              aria-label={`Project settings for ${project.displayName}`}
-                              title={`Project settings for ${project.displayName}`}
-                              className="ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-icon-muted outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                              onPointerDown={(event) => event.stopPropagation()}
-                              onClick={(event) => {
-                                void handleProjectSettings(event, project);
-                              }}
-                            >
-                              <SettingsIcon className="size-3.5" />
-                            </button>
-                          </MenuRadioItem>
-                        );
-                      })}
-                    </MenuRadioGroup>
-                  </MenuPopup>
-                </Menu>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <SidebarMenuButton
-                        size="icon"
-                        className="relative shrink-0 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
-                        onClick={openAddProjectCommandPalette}
-                        type="button"
-                        aria-label="New project"
-                      />
-                    }
-                  >
-                    <FolderPlusIcon />
-                    <span
-                      className="pointer-events-none absolute left-1/2 top-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
-                      aria-hidden="true"
-                    />
-                  </TooltipTrigger>
-                  <TooltipPopup side="right">New project</TooltipPopup>
-                </Tooltip>
-              </div>
-            ) : null}
-          </SidebarGroup>
+                    ))}
+                  </MenuRadioGroup>
+                </MenuPopup>
+              </Menu>
+            }
+          />
         }
       >
-        <SidebarGroup className="ps-[calc(var(--sidebar-content-inset)+1px)] pe-[var(--sidebar-content-inset)] pb-1 pt-0">
+        <SidebarGroup className="px-[var(--sidebar-content-inset)] pb-[var(--sidebar-content-inset)] pt-0">
           {isSearchingThreads ? (
             threadSearchResults.length > 0 ? (
               <TooltipProvider
@@ -3406,7 +3308,7 @@ export default function Sidebar() {
               closeDelay={0}
               timeout={400}
             >
-              <ul ref={attachListAutoAnimateRef} role="list" className="flex flex-col gap-px">
+              <ul ref={attachListAutoAnimateRef} role="list" className="flex flex-col">
                 {(() => {
                   const renderThreadRow = (
                     thread: EnvironmentThreadShell,
@@ -3619,18 +3521,17 @@ export default function Sidebar() {
                           onClick={toggleSettledShelf}
                           aria-expanded={settledShelfExpanded}
                           data-testid="sidebar-settled-shelf-toggle"
-                          className="mb-1 mt-3 flex w-full cursor-pointer items-center gap-2 px-2.5 text-left"
+                          className="mt-2 flex h-8 w-full cursor-pointer items-center justify-between rounded-md px-2 text-left hover:bg-sidebar-row-hover"
                         >
-                          <span className="text-xs font-medium text-muted-foreground/50">
+                          <span className="text-xs font-medium text-sidebar-muted-foreground/70">
                             {settledShelfExpanded
                               ? "Settled"
                               : `Settled (${settledThreads.length})`}
                           </span>
-                          <span className="h-px flex-1 bg-sidebar-border/60" />
                           <ChevronDownIcon
                             aria-hidden
                             className={cn(
-                              "size-3 text-muted-foreground/50 transition-transform",
+                              "size-3 text-sidebar-muted-foreground/70 transition-transform",
                               settledShelfExpanded && "rotate-180",
                             )}
                           />
