@@ -3,9 +3,9 @@
 On web and desktop, the default sidebar organizes threads into **Active** and **Settled** sections.
 Use **New chat** to start a thread or **New project** to add another project.
 
-Select **Search** below **New project** to find a thread. Press **Escape** or select the close
-button to return to the normal sidebar. The filter beside **Projects** limits the list to one project;
-choose **All projects** to clear the filter.
+Select **Search** below **New project** to replace that row with a search field. Press **Escape** or
+select the close button to restore the Search row. The filter beside **Projects** limits the list to
+one project; choose **All projects** to clear the filter.
 
 Development builds use the standard sidebar header. Nightly builds can use environment artwork,
 and either build can instead be identified with a version pill from appearance settings.

@@ -3147,19 +3147,7 @@ export default function Sidebar() {
     shortcutLabelForCommand(keybindings, "chat.newLocal");
   return (
     <>
-      <SidebarChromeHeader
-        isElectron={isElectron}
-        taskSearch={{
-          searchOpen: threadSearchOpen,
-          searchQuery: threadSearchQuery,
-          searchInputRef: threadSearchInputRef,
-          searchResultCount: threadSearchResults.length,
-          activeSearchResultIndex,
-          onCloseSearch: closeThreadSearchAndRestoreFocus,
-          onSearchQueryChange: handleThreadSearchQueryChange,
-          onSearchKeyDown: handleThreadSearchKeyDown,
-        }}
-      />
+      <SidebarChromeHeader isElectron={isElectron} />
       <SidebarContent
         className="gap-0"
         fixedHeader={
@@ -3173,8 +3161,15 @@ export default function Sidebar() {
             onNewTask={handleNewThreadClick}
             onNewProject={openAddProjectCommandPalette}
             searchOpen={threadSearchOpen}
+            searchQuery={threadSearchQuery}
+            searchInputRef={threadSearchInputRef}
             searchTriggerRef={threadSearchTriggerRef}
+            searchResultCount={threadSearchResults.length}
+            activeSearchResultIndex={activeSearchResultIndex}
             onOpenSearch={openThreadSearch}
+            onCloseSearch={closeThreadSearchAndRestoreFocus}
+            onSearchQueryChange={handleThreadSearchQueryChange}
+            onSearchKeyDown={handleThreadSearchKeyDown}
             projectFilterControl={
               <Menu open={projectScopeMenuOpen} onOpenChange={setProjectScopeMenuOpen}>
                 <MenuTrigger

@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import type { ComponentProps, ReactNode } from "react";
 import { describe, expect, it, vi } from "vite-plus/test";
 
 import { Menu, MenuTrigger } from "../ui/menu";
@@ -7,49 +8,54 @@ import { SidebarFooterNavigation } from "./SidebarChrome";
 import {
   SidebarProjectFilterButton,
   SidebarThreadEnvironmentIcon,
-  SidebarTaskHeaderContent,
   SidebarTaskPrimaryControls,
 } from "./SidebarTaskControls";
 
-function renderWithSidebar(children: React.ReactNode): string {
+function renderWithSidebar(children: ReactNode): string {
   return renderToStaticMarkup(<SidebarProvider>{children}</SidebarProvider>);
 }
 
-describe("default sidebar task controls", () => {
-  it("switches the branded header to an inline task search", () => {
-    const closed = renderWithSidebar(
-      <SidebarTaskHeaderContent
-        brand={<span>T3 Code</span>}
-        searchOpen={false}
-        searchQuery=""
-        searchInputRef={{ current: null }}
-        searchResultCount={0}
-        activeSearchResultIndex={0}
-        onCloseSearch={vi.fn()}
-        onSearchQueryChange={vi.fn()}
-        onSearchKeyDown={vi.fn()}
-      />,
-    );
+function renderPrimaryControls(
+  overrides: Partial<ComponentProps<typeof SidebarTaskPrimaryControls>> = {},
+): string {
+  return renderWithSidebar(
+    <SidebarTaskPrimaryControls
+      canStartTask
+      projectScopeLabel="t3code"
+      projectScopeActive
+      projectFilterControl={<button type="button">Filter</button>}
+      searchOpen={false}
+      searchQuery=""
+      searchInputRef={{ current: null }}
+      searchTriggerRef={{ current: null }}
+      searchResultCount={0}
+      activeSearchResultIndex={0}
+      onNewTask={vi.fn()}
+      onNewProject={vi.fn()}
+      onOpenSearch={vi.fn()}
+      onCloseSearch={vi.fn()}
+      onSearchQueryChange={vi.fn()}
+      onSearchKeyDown={vi.fn()}
+      {...overrides}
+    />,
+  );
+}
 
-    expect(closed).toContain("T3 Code");
-    expect(closed).not.toContain('aria-label="Search tasks"');
+describe("default sidebar task controls", () => {
+  it("replaces the Search row with an inline task search", () => {
+    const closed = renderPrimaryControls();
+
+    expect(closed).toContain(">Search</span>");
     expect(closed).not.toContain('role="combobox"');
 
-    const open = renderWithSidebar(
-      <SidebarTaskHeaderContent
-        brand={<span>T3 Code</span>}
-        searchOpen
-        searchQuery="sidebar"
-        searchInputRef={{ current: null }}
-        searchResultCount={2}
-        activeSearchResultIndex={1}
-        onCloseSearch={vi.fn()}
-        onSearchQueryChange={vi.fn()}
-        onSearchKeyDown={vi.fn()}
-      />,
-    );
+    const open = renderPrimaryControls({
+      searchOpen: true,
+      searchQuery: "sidebar",
+      searchResultCount: 2,
+      activeSearchResultIndex: 1,
+    });
 
-    expect(open).not.toContain("T3 Code");
+    expect(open).not.toContain(">Search</span>");
     expect(open).toContain('role="combobox"');
     expect(open).toContain('aria-label="Search tasks"');
     expect(open).toContain('aria-label="Close task search"');
@@ -57,37 +63,18 @@ describe("default sidebar task controls", () => {
   });
 
   it("does not reference a search result that is no longer rendered", () => {
-    const html = renderWithSidebar(
-      <SidebarTaskHeaderContent
-        brand={<span>T3 Code</span>}
-        searchOpen
-        searchQuery="sidebar"
-        searchInputRef={{ current: null }}
-        searchResultCount={1}
-        activeSearchResultIndex={2}
-        onCloseSearch={vi.fn()}
-        onSearchQueryChange={vi.fn()}
-        onSearchKeyDown={vi.fn()}
-      />,
-    );
+    const html = renderPrimaryControls({
+      searchOpen: true,
+      searchQuery: "sidebar",
+      searchResultCount: 1,
+      activeSearchResultIndex: 2,
+    });
 
     expect(html).not.toContain("aria-activedescendant");
   });
 
   it("keeps primary actions visible and communicates an active project scope", () => {
-    const html = renderWithSidebar(
-      <SidebarTaskPrimaryControls
-        canStartTask
-        projectScopeLabel="t3code"
-        projectScopeActive
-        projectFilterControl={<button type="button">Filter</button>}
-        searchOpen={false}
-        searchTriggerRef={{ current: null }}
-        onNewTask={vi.fn()}
-        onNewProject={vi.fn()}
-        onOpenSearch={vi.fn()}
-      />,
-    );
+    const html = renderPrimaryControls();
 
     expect(html).toContain("New chat");
     expect(html).toContain("New project");

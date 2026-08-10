@@ -1,5 +1,5 @@
 import { ChartNoAxesColumnIcon, SettingsIcon } from "lucide-react";
-import { memo, useCallback, type ComponentProps } from "react";
+import { memo, useCallback } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import { useEnvironmentIdentificationMode } from "../../hooks/useSettings";
@@ -21,15 +21,12 @@ import {
   useSidebar,
 } from "../ui/sidebar";
 import { SidebarProviderUpdatePill } from "./SidebarProviderUpdatePill";
-import { SidebarTaskHeaderContent } from "./SidebarTaskControls";
 import { SidebarUpdatePill } from "./SidebarUpdatePill";
 
 export const SidebarChromeHeader = memo(function SidebarChromeHeader({
   isElectron,
-  taskSearch,
 }: {
   isElectron: boolean;
-  taskSearch?: Omit<ComponentProps<typeof SidebarTaskHeaderContent>, "brand">;
 }) {
   const stageLabel = useEnvironmentStageLabel();
   const environmentIdentificationMode = useEnvironmentIdentificationMode();
@@ -63,7 +60,7 @@ export const SidebarChromeHeader = memo(function SidebarChromeHeader({
             "[:hover,[data-pressed]]:bg-white/15 focus-visible:ring-white/90 focus-visible:ring-offset-blue-700 [&_svg]:stroke-white/90! [&_svg]:opacity-100! [&_svg]:hover:stroke-white!",
         )}
       />
-      {taskSearch ? <SidebarTaskHeaderContent {...taskSearch} brand={brand} /> : brand}
+      {brand}
     </SidebarHeader>
   );
 });
