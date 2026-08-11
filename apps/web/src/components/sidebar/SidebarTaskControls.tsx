@@ -39,13 +39,7 @@ export const SidebarThreadEnvironmentIcon = memo(function SidebarThreadEnvironme
   const Icon = isRemote ? ServerIcon : MonitorIcon;
   const label = isRemote ? "Remote environment" : "Local environment";
 
-  return (
-    <Icon
-      role="img"
-      aria-label={label}
-      className="size-3 shrink-0 text-sidebar-muted-foreground/70"
-    />
-  );
+  return <Icon role="img" aria-label={label} className="size-3 shrink-0 text-muted-foreground" />;
 });
 
 export const SidebarThreadProviderBadge = memo(function SidebarThreadProviderBadge(props: {
@@ -59,7 +53,7 @@ export const SidebarThreadProviderBadge = memo(function SidebarThreadProviderBad
       role="img"
       aria-label={`${props.providerLabel} provider`}
       title={props.providerLabel}
-      className="h-5 w-7 rounded-md bg-secondary px-2 sm:h-5"
+      className="h-5 w-7 rounded-sm bg-secondary px-2 sm:h-5"
     >
       {props.driverKind ? (
         <ProviderInstanceIcon
@@ -174,7 +168,7 @@ export const SidebarTaskPrimaryControls = memo(function SidebarTaskPrimaryContro
       </SidebarGroup>
       <SidebarGroup className="relative z-[1] gap-1 pb-0">
         <SidebarGroupLabel
-          className="justify-between pe-1 opacity-70"
+          className="justify-between pe-1"
           data-project-scope-active={props.projectScopeActive}
         >
           <span className="min-w-0 flex-1 truncate">{props.projectScopeLabel}</span>

@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
+  SidebarGroupLabel,
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuSubButton,
@@ -75,6 +76,17 @@ describe("sidebar primitives", () => {
     expect(html).not.toContain("sidebar-row-hover");
     expect(html).not.toContain("sidebar-icon-color");
     expect(html).not.toContain("text-sidebar-muted-foreground/80");
+  });
+
+  it("uses the Figma section-label weight and color", () => {
+    const html = renderToStaticMarkup(
+      <SidebarProvider>
+        <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      </SidebarProvider>,
+    );
+
+    expect(html).toContain("font-medium");
+    expect(html).toContain("text-sidebar-foreground/70");
   });
 
   it("exposes active state through the stock data attribute", () => {

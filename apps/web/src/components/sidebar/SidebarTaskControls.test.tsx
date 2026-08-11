@@ -87,6 +87,7 @@ describe("default sidebar task controls", () => {
     expect(html).toContain('data-project-scope-active="true"');
     expect(html).toContain("Filter");
     expect(html).not.toContain("gap-0");
+    expect(html).not.toContain("pe-1 opacity-70");
   });
 
   it("uses the native sidebar active state for an open draft", () => {

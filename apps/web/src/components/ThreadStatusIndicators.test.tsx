@@ -22,6 +22,8 @@ describe("ThreadWorktreeIndicator", () => {
     );
     expect(markup).toContain('data-testid="thread-worktree-thread-1"');
     expect(markup).toContain("lucide-folder-git-2");
+    expect(markup).toContain("text-muted-foreground");
+    expect(markup).not.toContain("text-muted-foreground/40");
   });
 
   it("renders the current checkout when requested", () => {
@@ -39,6 +41,8 @@ describe("ThreadWorktreeIndicator", () => {
     expect(markup).toContain('aria-label="Current checkout: main"');
     expect(markup).toContain('data-testid="thread-checkout-thread-1"');
     expect(markup).toContain("lucide-git-branch");
+    expect(markup).toContain("text-muted-foreground");
+    expect(markup).not.toContain("text-muted-foreground/40");
   });
 
   it.each([null, "", "   "])("renders nothing for an absent worktree path", (worktreePath) => {

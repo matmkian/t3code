@@ -365,7 +365,7 @@ function SnoozePopoverButton(props: {
             aria-label="Snooze thread"
             onClick={(event) => event.stopPropagation()}
             onDoubleClick={(event) => event.stopPropagation()}
-            className="size-7 rounded-lg"
+            className="size-7 rounded-md"
           />
         }
       >
@@ -996,13 +996,17 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
   const rowSurfaceClassName = cn(
     "group/sidebar-row relative w-full cursor-pointer overflow-hidden text-left outline-none select-none",
     variant === "card" ? "rounded-lg" : "rounded-md",
-    props.isActive
-      ? "bg-sidebar-control-surface text-sidebar-foreground"
-      : isSelected
+    variant === "card"
+      ? props.isActive || isSelected
+        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+        : "bg-transparent text-sidebar-foreground"
+      : props.isActive
         ? "bg-sidebar-control-surface text-sidebar-foreground"
-        : shouldRecede
-          ? "text-sidebar-muted-foreground/75 hover:bg-sidebar-row-hover hover:text-sidebar-foreground"
-          : "bg-transparent text-sidebar-foreground hover:bg-sidebar-row-hover",
+        : isSelected
+          ? "bg-sidebar-control-surface text-sidebar-foreground"
+          : shouldRecede
+            ? "text-sidebar-muted-foreground/75 hover:bg-sidebar-row-hover hover:text-sidebar-foreground"
+            : "bg-transparent text-sidebar-foreground hover:bg-sidebar-row-hover",
   );
 
   const title = isRenaming ? (
@@ -1022,20 +1026,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
     <span
       className={cn(
         "min-w-0 flex-1 text-sm transition-opacity motion-reduce:transition-none",
-        shouldRecede ? "font-normal" : "font-medium",
         variant === "card"
-          ? cn(
-              "truncate",
-              isUnread || isWoke
-                ? "text-foreground"
-                : shouldRecede
-                  ? "text-secondary-label"
-                  : status === "failed"
-                    ? "text-foreground/95"
-                    : "text-foreground/90",
-            )
+          ? cn("truncate text-foreground", isUnread || isWoke ? "font-medium" : "font-normal")
           : cn(
               "truncate group-hover/sidebar-row:text-foreground",
+              shouldRecede ? "font-normal" : "font-medium",
               props.isActive || isWoke
                 ? "text-foreground"
                 : isUnread
@@ -1291,22 +1286,24 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                     variant="outline"
                     aria-label="Settle thread"
                     onClick={handleSettleClick}
-                    className="size-7 rounded-lg"
+                    className="size-7 rounded-md"
                   >
                     <CheckIcon className="size-4" />
                   </Button>
                 ) : null}
               </span>
             ) : null}
-            <div className="flex h-5 min-w-0 items-center gap-1.5">
-              <SidebarThreadEnvironmentIcon isRemote={props.isRemoteEnvironment} />
-              {props.projectTitle ? (
-                <span className="min-w-0 flex-1 truncate font-normal text-secondary-label text-xs">
-                  {props.projectTitle}
-                </span>
-              ) : (
-                <span className="flex-1" />
-              )}
+            <div className="flex h-5 min-w-0 items-center gap-2">
+              <span className="flex min-w-0 flex-1 items-center gap-[5px]">
+                <SidebarThreadEnvironmentIcon isRemote={props.isRemoteEnvironment} />
+                {props.projectTitle ? (
+                  <span className="min-w-0 flex-1 truncate font-normal text-secondary-label text-xs">
+                    {props.projectTitle}
+                  </span>
+                ) : (
+                  <span className="flex-1" />
+                )}
+              </span>
               {props.isPinned ? (
                 props.pinningSupported ? (
                   <button
@@ -1340,7 +1337,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                     isWokeStatus ? (
                       <Badge
                         variant={topStatus.variant}
-                        className="h-5 rounded-md border-warning/24 px-2 sm:h-5"
+                        className="h-5 rounded-sm border-warning/24 px-2 sm:h-5"
                         render={
                           <button
                             type="button"
@@ -1355,13 +1352,26 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                       </Badge>
                     ) : (
                       <Badge
-                        variant={topStatus.variant}
+                        variant={
+                          topStatus.icon === "working" || topStatus.icon === "done"
+                            ? "outline"
+                            : topStatus.variant
+                        }
                         className={cn(
-                          "h-5 rounded-md px-2 sm:h-5",
-                          topStatus.variant === "info" && "border-info/24",
-                          topStatus.variant === "success" && "border-success/24",
-                          topStatus.variant === "warning" && "border-warning/24",
-                          topStatus.variant === "error" && "border-destructive/24",
+                          "h-5 rounded-sm px-2 sm:h-5",
+                          topStatus.icon === "working" &&
+                            "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+                          topStatus.icon === "done" &&
+                            "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
+                          topStatus.icon === null &&
+                            topStatus.variant === "info" &&
+                            "border-info/24",
+                          topStatus.icon === null &&
+                            topStatus.variant === "warning" &&
+                            "border-warning/24",
+                          topStatus.icon === null &&
+                            topStatus.variant === "error" &&
+                            "border-destructive/24",
                         )}
                       >
                         {topStatus.icon === "working" ? (
@@ -1384,7 +1394,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                       </Badge>
                     )
                   ) : (
-                    <Badge variant="outline" className="h-5 rounded-md px-2 sm:h-5">
+                    <Badge variant="outline" className="h-5 rounded-sm px-2 sm:h-5">
                       <ClockIcon aria-hidden />
                       <span>{threadTimeLabel(thread)}</span>
                     </Badge>
@@ -1405,12 +1415,12 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                 </span>
               ) : null}
             </div>
-            <div className="flex h-4 min-w-0 items-center gap-1.5 text-secondary-label text-xs">
+            <div className="flex h-4 min-w-0 items-center gap-2 text-secondary-label text-xs">
               {/* Always the branch. The plan step used to take this slot while
                   working, but it truncated to a half-sentence and dropped the
                   branch, so the row lost its most stable identifier. */}
               {thread.branch ? (
-                <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                <span className="flex min-w-0 flex-1 items-center gap-[5px]">
                   <ThreadWorktreeIndicator thread={thread} showCurrentCheckout />
                   <span className="min-w-0 flex-1 truncate whitespace-nowrap">{thread.branch}</span>
                 </span>
@@ -3499,18 +3509,17 @@ export default function Sidebar() {
                           onClick={toggleSnoozedShelf}
                           aria-expanded={snoozedShelfExpanded}
                           data-testid="sidebar-snoozed-shelf-toggle"
-                          className="mb-1 mt-3 flex w-full cursor-pointer items-center gap-2 px-2.5 text-left"
+                          className="mt-2 flex h-8 w-full cursor-pointer items-center justify-between rounded-md px-2 text-left hover:bg-sidebar-accent"
                         >
-                          <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                          <span className="text-xs font-medium text-sidebar-foreground/70">
                             {snoozedShelfExpanded
                               ? "Snoozed"
                               : `Snoozed (${snoozedThreads.length})`}
                           </span>
-                          <span className="h-px flex-1 bg-blue-500/20 dark:bg-blue-400/15" />
                           <ChevronDownIcon
                             aria-hidden
                             className={cn(
-                              "size-3 text-blue-600 transition-transform dark:text-blue-400",
+                              "size-3 text-sidebar-foreground/70 transition-transform",
                               snoozedShelfExpanded && "rotate-180",
                             )}
                           />
@@ -3533,9 +3542,9 @@ export default function Sidebar() {
                           onClick={toggleSettledShelf}
                           aria-expanded={settledShelfExpanded}
                           data-testid="sidebar-settled-shelf-toggle"
-                          className="mt-2 flex h-8 w-full cursor-pointer items-center justify-between rounded-md px-2 text-left hover:bg-sidebar-row-hover"
+                          className="mt-2 flex h-8 w-full cursor-pointer items-center justify-between rounded-md px-2 text-left hover:bg-sidebar-accent"
                         >
-                          <span className="text-xs font-medium text-sidebar-muted-foreground/70">
+                          <span className="text-xs font-medium text-sidebar-foreground/70">
                             {settledShelfExpanded
                               ? "Settled"
                               : `Settled (${settledThreads.length})`}
@@ -3543,7 +3552,7 @@ export default function Sidebar() {
                           <ChevronDownIcon
                             aria-hidden
                             className={cn(
-                              "size-3 text-sidebar-muted-foreground/70 transition-transform",
+                              "size-3 text-sidebar-foreground/70 transition-transform",
                               settledShelfExpanded && "rotate-180",
                             )}
                           />

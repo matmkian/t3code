@@ -179,7 +179,7 @@ export function ThreadWorktreeIndicator({
           />
         }
       >
-        <Icon className="size-3 text-muted-foreground/40" />
+        <Icon className="size-3 text-muted-foreground" />
       </TooltipTrigger>
       <TooltipPopup side="top">{tooltip}</TooltipPopup>
     </Tooltip>
