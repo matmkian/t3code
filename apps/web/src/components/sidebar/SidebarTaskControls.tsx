@@ -46,6 +46,7 @@ export const SidebarThreadEnvironmentIcon = memo(function SidebarThreadEnvironme
 
 export const SidebarTaskPrimaryControls = memo(function SidebarTaskPrimaryControls(props: {
   canStartTask: boolean;
+  newTaskActive: boolean;
   projectScopeLabel: string;
   projectScopeActive: boolean;
   projectFilterControl: ReactNode;
@@ -75,6 +76,7 @@ export const SidebarTaskPrimaryControls = memo(function SidebarTaskPrimaryContro
             <SidebarMenuButton
               type="button"
               variant="prominent"
+              isActive={props.newTaskActive}
               disabled={!props.canStartTask}
               title={props.newTaskTitle}
               onClick={props.onNewTask}

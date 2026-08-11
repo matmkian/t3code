@@ -1,6 +1,6 @@
 import { ChartNoAxesColumnIcon, SettingsIcon } from "lucide-react";
 import { memo, useCallback } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 
 import { useEnvironmentIdentificationMode } from "../../hooks/useSettings";
 import { cn } from "../../lib/utils";
@@ -119,6 +119,7 @@ function T3Wordmark() {
 
 export const SidebarChromeFooter = memo(function SidebarChromeFooter() {
   const navigate = useNavigate();
+  const pathname = useLocation({ select: (location) => location.pathname });
   const { isMobile, setOpenMobile } = useSidebar();
   const handleSettingsClick = useCallback(() => {
     if (isMobile) {
@@ -138,28 +139,37 @@ export const SidebarChromeFooter = memo(function SidebarChromeFooter() {
     <SidebarFooter className="p-[var(--sidebar-content-inset)]">
       <SidebarProviderUpdatePill />
       <SidebarUpdatePill />
-      <SidebarFooterNavigation onUsage={handleUsageClick} onSettings={handleSettingsClick} />
+      <SidebarFooterNavigation
+        isUsageActive={pathname === "/usage"}
+        isSettingsActive={pathname === "/settings" || pathname.startsWith("/settings/")}
+        onUsage={handleUsageClick}
+        onSettings={handleSettingsClick}
+      />
     </SidebarFooter>
   );
 });
 
 export const SidebarFooterNavigation = memo(function SidebarFooterNavigation({
+  isSettingsActive,
+  isUsageActive,
   onSettings,
   onUsage,
 }: {
+  isSettingsActive: boolean;
+  isUsageActive: boolean;
   onSettings: () => void;
   onUsage: () => void;
 }) {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton onClick={onUsage}>
+        <SidebarMenuButton isActive={isUsageActive} onClick={onUsage}>
           <ChartNoAxesColumnIcon />
           <span>Usage</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton onClick={onSettings}>
+        <SidebarMenuButton isActive={isSettingsActive} onClick={onSettings}>
           <SettingsIcon />
           <span>Settings</span>
         </SidebarMenuButton>

@@ -3153,6 +3153,7 @@ export default function Sidebar() {
         fixedHeader={
           <SidebarTaskPrimaryControls
             canStartTask={projects.length > 0}
+            newTaskActive={routeTarget?.kind === "draft"}
             projectScopeLabel={scopedProjectGroup?.displayName ?? "Projects"}
             projectScopeActive={scopedProjectGroup !== null}
             newTaskTitle={

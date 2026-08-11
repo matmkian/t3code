@@ -21,6 +21,7 @@ function renderPrimaryControls(
   return renderWithSidebar(
     <SidebarTaskPrimaryControls
       canStartTask
+      newTaskActive={false}
       projectScopeLabel="t3code"
       projectScopeActive
       projectFilterControl={<button type="button">Filter</button>}
@@ -85,6 +86,12 @@ describe("default sidebar task controls", () => {
     expect(html).toContain("Filter");
   });
 
+  it("uses the native sidebar active state for an open draft", () => {
+    const html = renderPrimaryControls({ newTaskActive: true });
+
+    expect(html).toMatch(/data-active="true"[^>]*>.*?<span>New chat<\/span>/);
+  });
+
   it("forwards menu semantics through the project filter button", () => {
     const html = renderWithSidebar(
       <Menu>
@@ -100,12 +107,19 @@ describe("default sidebar task controls", () => {
 
   it("keeps Usage reachable above Settings", () => {
     const html = renderWithSidebar(
-      <SidebarFooterNavigation onUsage={vi.fn()} onSettings={vi.fn()} />,
+      <SidebarFooterNavigation
+        isUsageActive
+        isSettingsActive={false}
+        onUsage={vi.fn()}
+        onSettings={vi.fn()}
+      />,
     );
 
     expect(html).toContain("Usage");
     expect(html).toContain("Settings");
     expect(html.indexOf("Usage")).toBeLessThan(html.indexOf("Settings"));
+    expect(html).toMatch(/data-active="true"[^>]*>.*?<span>Usage<\/span>/);
+    expect(html).toMatch(/data-active="false"[^>]*>.*?<span>Settings<\/span>/);
   });
 
   it("distinguishes local and remote thread environments", () => {

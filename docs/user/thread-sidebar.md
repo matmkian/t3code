@@ -7,6 +7,9 @@ Select **Search** below **New project** to replace that row with a search field.
 select the close button to restore the Search row. The filter beside **Projects** limits the list to
 one project; choose **All projects** to clear the filter.
 
+**New chat** is highlighted while a draft is open. The footer highlights the current navigation
+view, and Settings highlights the current settings section.
+
 Development builds use the standard sidebar header. Nightly builds can use environment artwork,
 and either build can instead be identified with a version pill from appearance settings.
 
