@@ -37,10 +37,11 @@ import {
   ChevronDownIcon,
   CircleAlertIcon,
   CircleCheckIcon,
-  CircleDashedIcon,
   ClockIcon,
   FolderIcon,
   GitBranchIcon,
+  GitPullRequestIcon,
+  LoaderCircleIcon,
   MessageSquareIcon,
   PinIcon,
   PlusIcon,
@@ -157,12 +158,14 @@ import { primaryServerProvidersAtom } from "../state/server";
 import { useThreadRunningTerminalIds } from "../state/terminalSessions";
 import { stackedThreadToast, toastManager } from "./ui/toast";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import { Menu, MenuPopup, MenuRadioGroup, MenuRadioItem, MenuTrigger } from "./ui/menu";
 import { SidebarContent, SidebarGroup, useSidebar } from "./ui/sidebar";
 import { SidebarChromeFooter, SidebarChromeHeader } from "./sidebar/SidebarChrome";
 import {
   SidebarProjectFilterButton,
   SidebarThreadEnvironmentIcon,
+  SidebarThreadProviderBadge,
   SidebarTaskPrimaryControls,
 } from "./sidebar/SidebarTaskControls";
 import { Popover, PopoverPopup, PopoverTrigger } from "./ui/popover";
@@ -355,16 +358,18 @@ function SnoozePopoverButton(props: {
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger
         render={
-          <button
+          <Button
             type="button"
+            size="icon-sm"
+            variant="outline"
             aria-label="Snooze thread"
             onClick={(event) => event.stopPropagation()}
             onDoubleClick={(event) => event.stopPropagation()}
-            className="inline-flex h-full cursor-pointer items-center gap-0.5 rounded-md bg-transparent px-1.5 text-xs text-muted-foreground hover:text-foreground"
+            className="size-7 rounded-lg"
           />
         }
       >
-        <ClockIcon className="size-3" />
+        <ClockIcon className="size-4" />
       </PopoverTrigger>
       <PopoverPopup side="bottom" align="end" className="w-56" viewportClassName="p-1">
         {presets.map((preset) => (
@@ -1064,6 +1069,18 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
         #{pr.number}
       </button>
     ) : null;
+  const prCardBadge =
+    prStatus && pr ? (
+      <button
+        type="button"
+        onClick={handlePrClick}
+        className="inline-flex h-4 shrink-0 items-center gap-[5px] text-secondary-label transition-colors hover:text-foreground"
+        aria-label={prStatus.tooltip}
+      >
+        <GitPullRequestIcon aria-hidden className="size-3" />
+        <span className="text-xs tabular-nums">{pr.number}</span>
+      </button>
+    ) : null;
   const terminalStatusIcon = terminalStatus ? (
     <span
       role="img"
@@ -1251,6 +1268,36 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
           }
         >
           <div className="relative z-10 flex min-h-[5.25rem] flex-col gap-1 p-3">
+            {props.settlementSupported || showSnoozeButton ? (
+              <span
+                data-testid="sidebar-thread-hover-actions"
+                className={cn(
+                  "peer/sidebar-actions pointer-events-none absolute top-[9px] right-[9px] z-20 flex h-7 items-center justify-end gap-1 opacity-0 transition-opacity has-[:focus-visible]:pointer-events-auto has-[:focus-visible]:opacity-100 group-hover/sidebar-row:pointer-events-auto group-hover/sidebar-row:opacity-100",
+                  snoozeMenuOpen && "pointer-events-auto opacity-100",
+                )}
+              >
+                {showSnoozeButton ? (
+                  <SnoozePopoverButton
+                    open={snoozeMenuOpen}
+                    onOpenChange={setSnoozeMenuOpen}
+                    onSnooze={handleSnoozePreset}
+                    timestampFormat={props.timestampFormat}
+                  />
+                ) : null}
+                {props.settlementSupported ? (
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="outline"
+                    aria-label="Settle thread"
+                    onClick={handleSettleClick}
+                    className="size-7 rounded-lg"
+                  >
+                    <CheckIcon className="size-4" />
+                  </Button>
+                ) : null}
+              </span>
+            ) : null}
             <div className="flex h-5 min-w-0 items-center gap-1.5">
               <SidebarThreadEnvironmentIcon isRemote={props.isRemoteEnvironment} />
               {props.projectTitle ? (
@@ -1279,31 +1326,21 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                   />
                 )
               ) : null}
-              <Badge variant="outline" title={providerLabel} className="h-5 max-w-20 px-2">
-                <span className="truncate">{providerLabel}</span>
-              </Badge>
-              {/* The visible state owns this slot's width: status at rest,
-                  actions on hover/keyboard focus or while the popover is open. Keeping
-                  the hidden state out of flow lets the project label reclaim
-                  space without either state overlapping it. */}
-              <span className="group/sidebar-status-slot relative ml-auto flex h-5 min-w-8 shrink-0 items-stretch justify-end text-xs">
-                {/* Read-only status labels yield to the hover actions. Woke is
-                    itself an action, so it stays pointer-enabled and visible
-                    while the other controls appear beside it. */}
+              <span
+                data-testid="sidebar-thread-top-metadata"
+                className={cn(
+                  "ml-auto flex h-5 shrink-0 items-center justify-end gap-1 text-xs transition-opacity group-hover/sidebar-row:pointer-events-none group-hover/sidebar-row:opacity-0 peer-has-[:focus-visible]/sidebar-actions:pointer-events-none peer-has-[:focus-visible]/sidebar-actions:opacity-0",
+                  snoozeMenuOpen && "pointer-events-none opacity-0",
+                )}
+              >
                 <span
-                  className={cn(
-                    isWokeStatus
-                      ? "pointer-events-auto"
-                      : "pointer-events-none group-has-[:focus-visible]/sidebar-status-slot:absolute group-has-[:focus-visible]/sidebar-status-slot:right-0 group-has-[:focus-visible]/sidebar-status-slot:opacity-0 group-hover/sidebar-row:absolute group-hover/sidebar-row:right-0 group-hover/sidebar-row:opacity-0",
-                    "self-center justify-self-end tabular-nums text-secondary-label transition-opacity",
-                    snoozeMenuOpen && "pointer-events-none absolute right-0 opacity-0",
-                  )}
+                  className={cn("shrink-0 tabular-nums", !isWokeStatus && "pointer-events-none")}
                 >
                   {topStatus ? (
                     isWokeStatus ? (
                       <Badge
                         variant={topStatus.variant}
-                        className="h-5 px-2"
+                        className="h-5 rounded-md border-warning/24 px-2 sm:h-5"
                         render={
                           <button
                             type="button"
@@ -1317,9 +1354,18 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                         <span role="status">{topStatus.label}</span>
                       </Badge>
                     ) : (
-                      <Badge variant={topStatus.variant} className="h-5 px-2">
+                      <Badge
+                        variant={topStatus.variant}
+                        className={cn(
+                          "h-5 rounded-md px-2 sm:h-5",
+                          topStatus.variant === "info" && "border-info/24",
+                          topStatus.variant === "success" && "border-success/24",
+                          topStatus.variant === "warning" && "border-warning/24",
+                          topStatus.variant === "error" && "border-destructive/24",
+                        )}
+                      >
                         {topStatus.icon === "working" ? (
-                          <CircleDashedIcon aria-hidden />
+                          <LoaderCircleIcon aria-hidden />
                         ) : topStatus.icon === "done" ? (
                           <CircleCheckIcon aria-hidden />
                         ) : null}
@@ -1338,45 +1384,17 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                       </Badge>
                     )
                   ) : (
-                    <Badge variant="outline" className="h-5 px-2">
+                    <Badge variant="outline" className="h-5 rounded-md px-2 sm:h-5">
                       <ClockIcon aria-hidden />
                       <span>{threadTimeLabel(thread)}</span>
                     </Badge>
                   )}
                 </span>
-                {props.settlementSupported || showSnoozeButton ? (
-                  <span
-                    className={cn(
-                      // focus-visible, not focus-within: a mouse click leaves
-                      // the Settle button focused, and a plain focus-within
-                      // would keep the controls pinned over the status label
-                      // once the pointer moves away (e.g. after a failed
-                      // settle) instead of cross-fading back.
-                      "pointer-events-none absolute inset-y-0 right-0 flex items-stretch opacity-0 transition-opacity has-[:focus-visible]:pointer-events-auto has-[:focus-visible]:static has-[:focus-visible]:opacity-100 group-hover/sidebar-row:pointer-events-auto group-hover/sidebar-row:static group-hover/sidebar-row:opacity-100",
-                      snoozeMenuOpen && "pointer-events-auto static opacity-100",
-                    )}
-                  >
-                    {showSnoozeButton ? (
-                      <SnoozePopoverButton
-                        open={snoozeMenuOpen}
-                        onOpenChange={setSnoozeMenuOpen}
-                        onSnooze={handleSnoozePreset}
-                        timestampFormat={props.timestampFormat}
-                      />
-                    ) : null}
-                    {props.settlementSupported ? (
-                      <button
-                        type="button"
-                        aria-label="Settle thread"
-                        onClick={handleSettleClick}
-                        className="-mr-1 inline-flex cursor-pointer items-center gap-1 rounded-md bg-transparent px-1.5 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <CheckIcon className="size-3.5" />
-                        Settle
-                      </button>
-                    ) : null}
-                  </span>
-                ) : null}
+                <SidebarThreadProviderBadge
+                  driverKind={driverKind}
+                  providerLabel={providerLabel}
+                  accentColor={providerEntry?.accentColor}
+                />
               </span>
             </div>
             <div className="flex min-w-0 leading-5">
@@ -1387,26 +1405,26 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                 </span>
               ) : null}
             </div>
-            <div className="flex min-w-0 items-center gap-1.5 text-secondary-label text-xs">
+            <div className="flex h-4 min-w-0 items-center gap-1.5 text-secondary-label text-xs">
               {/* Always the branch. The plan step used to take this slot while
                   working, but it truncated to a half-sentence and dropped the
                   branch, so the row lost its most stable identifier. */}
               {thread.branch ? (
-                <>
+                <span className="flex min-w-0 flex-1 items-center gap-1.5">
                   <ThreadWorktreeIndicator thread={thread} showCurrentCheckout />
                   <span className="min-w-0 flex-1 truncate whitespace-nowrap">{thread.branch}</span>
-                </>
+                </span>
               ) : (
                 <span className="flex-1" />
               )}
               {terminalStatusIcon}
-              {prBadge}
               {diff ? (
                 <span className="shrink-0 font-mono">
                   <span className="text-emerald-600 dark:text-emerald-400">+{diff.insertions}</span>{" "}
                   <span className="text-red-600 dark:text-red-400">−{diff.deletions}</span>
                 </span>
               ) : null}
+              {prCardBadge}
             </div>
           </div>
           {props.jumpLabel ? <JumpHintBadge label={props.jumpLabel} /> : null}

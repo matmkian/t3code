@@ -18,7 +18,13 @@ The icon beside a thread's project name shows where it runs: a monitor means you
 and a server means a remote environment.
 
 The icon beside the branch name shows how the thread is checked out: a branch means the current
-checkout, and a folder with a branch means a worktree.
+checkout, and a folder with a branch means a worktree. When the branch has a pull request, its
+number appears at the end of the branch row.
+
+The badges at the top of a thread show its current state and provider. Active work shows its
+elapsed time, completed work shows **Done**, and inactive work shows the most recent timestamp.
+The provider is represented by its icon. Hover a thread to replace those badges with the available
+**Snooze** and **Settle** actions; the thread card keeps the same size while the actions are visible.
 
 Pin a thread from its context menu to keep it in the pinned section above your active work.
 Pinned threads are shown independently of their project, including when you connect to more than

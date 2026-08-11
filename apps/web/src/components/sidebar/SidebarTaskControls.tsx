@@ -1,4 +1,5 @@
 import {
+  BotIcon,
   FolderPlusIcon,
   ListFilterIcon,
   MonitorIcon,
@@ -7,6 +8,7 @@ import {
   SquarePenIcon,
   XIcon,
 } from "lucide-react";
+import type { ProviderDriverKind } from "@t3tools/contracts";
 import {
   memo,
   type ChangeEventHandler,
@@ -17,6 +19,8 @@ import {
 } from "react";
 
 import { cn } from "~/lib/utils";
+import { ProviderInstanceIcon } from "../chat/ProviderInstanceIcon";
+import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
@@ -41,6 +45,34 @@ export const SidebarThreadEnvironmentIcon = memo(function SidebarThreadEnvironme
       aria-label={label}
       className="size-3 shrink-0 text-sidebar-muted-foreground/70"
     />
+  );
+});
+
+export const SidebarThreadProviderBadge = memo(function SidebarThreadProviderBadge(props: {
+  driverKind: ProviderDriverKind | null;
+  providerLabel: string;
+  accentColor?: string | undefined;
+}) {
+  return (
+    <Badge
+      variant="outline"
+      role="img"
+      aria-label={`${props.providerLabel} provider`}
+      title={props.providerLabel}
+      className="h-5 w-7 rounded-md bg-secondary px-2 sm:h-5"
+    >
+      {props.driverKind ? (
+        <ProviderInstanceIcon
+          driverKind={props.driverKind}
+          displayName={props.providerLabel}
+          accentColor={props.accentColor}
+          className="size-3"
+          iconClassName="size-3"
+        />
+      ) : (
+        <BotIcon aria-hidden className="size-3" />
+      )}
+    </Badge>
   );
 });
 

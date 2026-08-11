@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { ProviderDriverKind } from "@t3tools/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { describe, expect, it, vi } from "vite-plus/test";
 
@@ -7,6 +8,7 @@ import { SidebarProvider } from "../ui/sidebar";
 import { SidebarFooterNavigation } from "./SidebarChrome";
 import {
   SidebarProjectFilterButton,
+  SidebarThreadProviderBadge,
   SidebarThreadEnvironmentIcon,
   SidebarTaskPrimaryControls,
 } from "./SidebarTaskControls";
@@ -137,5 +139,25 @@ describe("default sidebar task controls", () => {
     expect(local).not.toContain('aria-label="Remote environment"');
     expect(remote).toContain('aria-label="Remote environment"');
     expect(remote).not.toContain('aria-label="Local environment"');
+  });
+
+  it.each([
+    ["Codex", "codex"],
+    ["Claude", "claudeAgent"],
+    ["Cursor", "cursor"],
+    ["Grok", "grok"],
+    ["OpenCode", "opencode"],
+  ] as const)("shows the %s provider as an icon-only badge", (label, driverKind) => {
+    const html = renderWithSidebar(
+      <SidebarThreadProviderBadge
+        driverKind={ProviderDriverKind.make(driverKind)}
+        providerLabel={label}
+      />,
+    );
+
+    expect(html).toContain(`aria-label="${label} provider"`);
+    expect(html).toContain("size-3");
+    expect(html).toContain("sm:h-5");
+    expect(html).not.toContain(`>${label}<`);
   });
 });
