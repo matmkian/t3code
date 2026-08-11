@@ -71,11 +71,10 @@ export const SidebarTaskPrimaryControls = memo(function SidebarTaskPrimaryContro
   return (
     <>
       <SidebarGroup className="relative z-[1] py-0">
-        <SidebarMenu className="gap-0">
+        <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               type="button"
-              variant="prominent"
               isActive={props.newTaskActive}
               disabled={!props.canStartTask}
               title={props.newTaskTitle}
@@ -86,7 +85,7 @@ export const SidebarTaskPrimaryControls = memo(function SidebarTaskPrimaryContro
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton type="button" variant="prominent" onClick={props.onNewProject}>
+            <SidebarMenuButton type="button" onClick={props.onNewProject}>
               <FolderPlusIcon aria-hidden />
               <span>New project</span>
             </SidebarMenuButton>
@@ -131,7 +130,6 @@ export const SidebarTaskPrimaryControls = memo(function SidebarTaskPrimaryContro
               <SidebarMenuButton
                 ref={props.searchTriggerRef}
                 type="button"
-                variant="prominent"
                 aria-expanded={false}
                 onClick={props.onOpenSearch}
               >

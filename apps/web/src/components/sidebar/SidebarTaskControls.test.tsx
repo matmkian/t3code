@@ -84,12 +84,13 @@ describe("default sidebar task controls", () => {
     expect(html).toContain("t3code");
     expect(html).toContain('data-project-scope-active="true"');
     expect(html).toContain("Filter");
+    expect(html).not.toContain("gap-0");
   });
 
   it("uses the native sidebar active state for an open draft", () => {
     const html = renderPrimaryControls({ newTaskActive: true });
 
-    expect(html).toMatch(/data-active="true"[^>]*>.*?<span>New chat<\/span>/);
+    expect(html).toMatch(/data-active=""[^>]*>.*?<span>New chat<\/span>/);
   });
 
   it("forwards menu semantics through the project filter button", () => {
@@ -118,8 +119,14 @@ describe("default sidebar task controls", () => {
     expect(html).toContain("Usage");
     expect(html).toContain("Settings");
     expect(html.indexOf("Usage")).toBeLessThan(html.indexOf("Settings"));
-    expect(html).toMatch(/data-active="true"[^>]*>.*?<span>Usage<\/span>/);
-    expect(html).toMatch(/data-active="false"[^>]*>.*?<span>Settings<\/span>/);
+    const usageButton = html
+      .split("<button")
+      .find((button) => button.includes("<span>Usage</span>"));
+    const settingsButton = html
+      .split("<button")
+      .find((button) => button.includes("<span>Settings</span>"));
+    expect(usageButton).toContain('data-active=""');
+    expect(settingsButton).not.toContain('data-active=""');
   });
 
   it("distinguishes local and remote thread environments", () => {
