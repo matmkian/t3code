@@ -56,6 +56,20 @@ We need to be on the same page with terminology. When communicating, use this la
 - **turn** means one user-to-agent cycle, including follow-up work such as checkpointing.
 - **T3 home** means the base data directory. Runtime state normally lives below its userdata directory.
 
+## Agent skills
+
+### Issue tracker
+
+Linear is the source of truth for specifications and implementation issues. The repository defaults to the T3 Code team, and Minimal desktop UI is the current program. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Linear uses the repository's five canonical triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repository uses a single root domain context and system-level ADRs. See `docs/agents/domain.md`.
+
 ## The three ways to hurt yourself
 
 1. **Killing by pattern.** Never `pkill -f`, `pgrep | kill`, or `kill` a PID you found by matching a name, path, or worktree string. Your own agent process has this worktree's path in its argv, and this machine runs several other dev servers at once. Kill only a PID you captured at spawn, or the owner of your port from `ss -H -ltnp` after confirming `/proc/<pid>/cwd` is your worktree.
