@@ -8,6 +8,8 @@
     "dev:share": "node scripts/dev-runner.ts dev --share",
     "dev:server": "node scripts/dev-runner.ts dev:server",
     "dev:web": "node scripts/dev-runner.ts dev:web",
+    "dev:minimal-web": "vp run --filter @t3tools/minimal-web dev",
+    "dev:minimal-web:tunnel": "vp run --filter @t3tools/minimal-web dev:tunnel",
     "dev:marketing": "vp run --filter @t3tools/marketing dev",
     "dev:desktop": "node scripts/dev-runner.ts dev:desktop",
     "migrate-dev-db": "node apps/server/scripts/migrate-dev-db.ts",

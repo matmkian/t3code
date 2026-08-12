@@ -1,0 +1,14 @@
+# Upstream copy ledger
+
+Copied code belongs to the minimal renderer after import. Refresh it manually when an upstream change is useful; do not replace these copies with imports from another application.
+
+| Minimal file                                         | Upstream source                                                      | Imported at commit                         | Adaptation notes                                                                                                                    |
+| ---------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `src/features/navigation/components/*`               | `experiments/minimal-desktop-ui/src/App.tsx`                         | `034ba2fb3caa9abceebbde9c31b91d272ba5c723` | Split the approved static sidebar into a navigation feature with colocated fixtures.                                                |
+| `src/features/thread/components/thread-timeline.tsx` | `shadcn-ui/chatbot-template/components/chat.tsx`, `chat-message.tsx` | `8d3939449dbc26dffa86af3b7776618a08f90bb8` | Kept the Chat/ChatMessage composition using Message Scroller, Message, Bubble, and Marker; removed Next.js, AI SDK, and live state. |
+| `src/features/thread/components/thread-composer.tsx` | `shadcn-ui/chatbot-template/components/prompt-form.tsx`              | `8d3939449dbc26dffa86af3b7776618a08f90bb8` | Reduced PromptForm to the deterministic Input Group composition in the approved frame.                                              |
+| `src/features/thread/components/thread-header.tsx`   | `shadcn-ui/ui registry/base-nova/blocks/sidebar-01/page.tsx`         | `efac5987074af84ece57c367c6dd83387b967022` | Adapted the registry header composition with the renderer's project and thread breadcrumb values.                                   |
+| `src/assets/claude.svg`                              | `experiments/minimal-desktop-ui/src/assets/claude.svg`               | `034ba2fb3caa9abceebbde9c31b91d272ba5c723` | Renderer-owned copy of the Figma export.                                                                                            |
+| `src/assets/openai.svg`                              | `experiments/minimal-desktop-ui/src/assets/openai.svg`               | `034ba2fb3caa9abceebbde9c31b91d272ba5c723` | Renderer-owned copy of the Figma export.                                                                                            |
+
+Files under `src/components/ui` are generated through the shadcn CLI. Their registry provenance is recorded by `components.json`, so they do not receive individual ledger rows.

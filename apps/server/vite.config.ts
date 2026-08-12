@@ -3,6 +3,7 @@ import { defineConfig, mergeConfig } from "vite-plus";
 
 import baseConfig from "../../vite.config.ts";
 import { loadRepoEnv } from "../../scripts/lib/public-config.ts";
+import { resolveRendererTarget } from "../../scripts/lib/renderer-target.ts";
 import packageJson from "./package.json" with { type: "json" };
 
 const bundledPackagePrefixes = [
@@ -18,6 +19,7 @@ export function shouldBundleCliDependency(id: string): boolean {
 
 const repoEnv = loadRepoEnv();
 const cliBuildChannel = packageJson.version.includes("-nightly.") ? "nightly" : "latest";
+const rendererTarget = resolveRendererTarget(process.env);
 
 export default mergeConfig(
   baseConfig,
@@ -26,7 +28,7 @@ export default mergeConfig(
       tasks: {
         build: {
           command: "node scripts/cli.ts build",
-          dependsOn: ["@t3tools/web#build"],
+          dependsOn: [`${rendererTarget.workspacePackage}#build`],
           cache: false,
         },
       },

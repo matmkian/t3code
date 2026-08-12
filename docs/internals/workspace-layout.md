@@ -12,6 +12,9 @@ the task commands.
   Also serves the built web app.
 - `apps/web` (`@t3tools/web`): React + Vite UI. Consumes the shared client runtime and adds routing,
   components, and web-specific platform layers.
+- `apps/minimal-web` (`@t3tools/minimal-web`): focused React + Vite renderer with independently
+  owned UI. It starts with a deterministic static surface and is selected for packaged builds with
+  `T3CODE_RENDERER=minimal`; the full renderer remains the default.
 - `apps/desktop` (`@t3tools/desktop`): Electron shell. Supervises a desktop-scoped `t3` backend,
   loads the web bundle over the `t3code://` protocol, and owns SSH-managed remote environments.
 - `apps/mobile` (`@t3tools/mobile`): Expo/React Native client. Same client runtime composition as
