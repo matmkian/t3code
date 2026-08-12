@@ -16,6 +16,7 @@ import {
   resolveWebIconOverrides,
 } from "../../../scripts/lib/brand-assets.ts";
 import { resolveCatalogDependencies } from "../../../scripts/lib/resolve-catalog.ts";
+import { resolveRendererTarget } from "../../../scripts/lib/renderer-target.ts";
 import { fromJsonStringPretty } from "@t3tools/shared/schemaJson";
 import { fromYaml } from "@t3tools/shared/schemaYaml";
 import { resolveSpawnCommand } from "@t3tools/shared/shell";
@@ -151,6 +152,7 @@ const buildCmd = Command.make(
       const fs = yield* FileSystem.FileSystem;
       const repoRoot = yield* RepoRoot;
       const serverDir = path.join(repoRoot, "apps/server");
+      const rendererTarget = resolveRendererTarget(process.env);
 
       yield* Effect.log("[cli] Running tsdown...");
       yield* runCommand(
@@ -162,15 +164,17 @@ const buildCmd = Command.make(
         }),
       );
 
-      const webDist = path.join(repoRoot, "apps/web/dist");
+      const rendererDist = path.join(repoRoot, rendererTarget.distDirectory);
       const clientTarget = path.join(serverDir, "dist/client");
 
-      if (yield* fs.exists(webDist)) {
-        yield* fs.copy(webDist, clientTarget);
+      if (yield* fs.exists(rendererDist)) {
+        yield* fs.copy(rendererDist, clientTarget);
         yield* applyDevelopmentIconOverrides(repoRoot, serverDir);
-        yield* Effect.log("[cli] Bundled web app into dist/client");
+        yield* Effect.log(`[cli] Bundled ${rendererTarget.name} renderer into dist/client`);
       } else {
-        yield* Effect.logWarning("[cli] Web dist not found — skipping client bundle.");
+        yield* Effect.logWarning(
+          `[cli] Renderer dist not found at ${rendererTarget.distDirectory} — skipping client bundle.`,
+        );
       }
     }),
 ).pipe(Command.withDescription("Build the server package (tsdown + bundle web client)."));
