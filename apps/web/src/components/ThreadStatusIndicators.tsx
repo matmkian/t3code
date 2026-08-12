@@ -4,7 +4,13 @@ import {
   scopeThreadRef,
 } from "@t3tools/client-runtime/environment";
 import type { VcsStatusResult } from "@t3tools/contracts";
-import { CloudIcon, FolderGit2Icon, GitPullRequestIcon, TerminalIcon } from "lucide-react";
+import {
+  CloudIcon,
+  FolderGit2Icon,
+  GitBranchIcon,
+  GitPullRequestIcon,
+  TerminalIcon,
+} from "lucide-react";
 import { useMemo } from "react";
 import { useEnvironment, usePrimaryEnvironmentId } from "../state/environments";
 import { useProject } from "../state/entities";
@@ -141,18 +147,25 @@ export function terminalStatusFromRunningIds(
 
 export function ThreadWorktreeIndicator({
   thread,
+  showCurrentCheckout = false,
 }: {
   thread: Pick<SidebarThreadSummary, "id" | "branch" | "worktreePath">;
+  showCurrentCheckout?: boolean;
 }) {
   const worktreePath = thread.worktreePath?.trim();
-  if (!worktreePath) {
+  if (!worktreePath && !showCurrentCheckout) {
     return null;
   }
 
-  const displayPath = formatWorktreePathForDisplay(worktreePath);
-  const tooltip = thread.branch
-    ? `Worktree: ${displayPath} (${thread.branch})`
-    : `Worktree: ${displayPath}`;
+  const isWorktree = Boolean(worktreePath);
+  const tooltip = worktreePath
+    ? thread.branch
+      ? `Worktree: ${formatWorktreePathForDisplay(worktreePath)} (${thread.branch})`
+      : `Worktree: ${formatWorktreePathForDisplay(worktreePath)}`
+    : thread.branch
+      ? `Current checkout: ${thread.branch}`
+      : "Current checkout";
+  const Icon = isWorktree ? FolderGit2Icon : GitBranchIcon;
 
   return (
     <Tooltip>
@@ -161,12 +174,12 @@ export function ThreadWorktreeIndicator({
           <span
             role="img"
             aria-label={tooltip}
-            data-testid={`thread-worktree-${thread.id}`}
+            data-testid={`thread-${isWorktree ? "worktree" : "checkout"}-${thread.id}`}
             className="inline-flex items-center justify-center"
           />
         }
       >
-        <FolderGit2Icon className="size-3 text-muted-foreground/40" />
+        <Icon className="size-3 text-muted-foreground" />
       </TooltipTrigger>
       <TooltipPopup side="top">{tooltip}</TooltipPopup>
     </Tooltip>

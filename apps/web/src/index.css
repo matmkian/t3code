@@ -189,12 +189,15 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   --color-message-action-hover: var(--message-action-hover);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
   --color-sidebar-control-surface: var(--sidebar-control-surface);
   --color-sidebar-row-hover: var(--sidebar-row-hover);
   --color-sidebar-row-active: var(--sidebar-row-active);
   --color-sidebar-row-selected: var(--sidebar-row-selected);
   --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -915,6 +918,9 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
      portaled mobile sheets and settings navigation outside the app sidebar. */
   --sidebar: var(--color-zinc-50);
   --sidebar-foreground: var(--foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-ring: var(--ring);
   --sidebar-muted-foreground: var(--muted-foreground);
   --sidebar-control-surface: var(--color-zinc-100);
   --sidebar-row-hover: var(--color-zinc-25);
@@ -979,6 +985,9 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
     --update-surface: color-mix(in srgb, var(--update) 18%, transparent);
     --sidebar: var(--card);
     --sidebar-foreground: var(--foreground);
+    --sidebar-accent: var(--accent);
+    --sidebar-accent-foreground: var(--accent-foreground);
+    --sidebar-ring: var(--ring);
     --sidebar-muted-foreground: var(--muted-foreground);
     --sidebar-control-surface: var(--muted);
     --sidebar-row-hover: var(--accent);
@@ -1011,6 +1020,9 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   --input: var(--color-zinc-300);
   --sidebar: var(--color-zinc-50);
   --sidebar-foreground: var(--color-zinc-800);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-ring: var(--ring);
   --sidebar-muted-foreground: var(--color-zinc-500);
   --sidebar-control-surface: var(--color-zinc-100);
   --sidebar-row-hover: var(--color-zinc-25);
@@ -1034,6 +1046,9 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   --input: rgb(255 255 255 / 18%);
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-ring: var(--ring);
   --sidebar-muted-foreground: var(--muted-foreground);
   --sidebar-control-surface: var(--muted);
   --sidebar-row-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
@@ -1103,6 +1118,9 @@ html.dark[data-theme-id] {
   --ring: var(--app-theme-focus);
   --sidebar: var(--app-theme-sidebar);
   --sidebar-foreground: var(--app-theme-sidebar-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-ring: var(--ring);
   --sidebar-muted-foreground: var(--app-theme-sidebar-muted-foreground);
   --sidebar-control-surface: var(--app-theme-sidebar-control-surface);
   --sidebar-row-hover: var(--app-theme-sidebar-row-hover);
@@ -1331,6 +1349,9 @@ html[data-theme-id] [data-app-sidebar] {
   --input: var(--app-theme-input);
   --sidebar: var(--app-theme-sidebar);
   --sidebar-foreground: var(--app-theme-sidebar-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-ring: var(--ring);
   --sidebar-muted-foreground: var(--app-theme-sidebar-muted-foreground);
   --sidebar-control-surface: var(--app-theme-sidebar-control-surface);
   --sidebar-row-hover: var(--app-theme-sidebar-row-hover);
